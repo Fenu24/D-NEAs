@@ -1,0 +1,10 @@
+! Low-resolution model file v4 by Granvik, Morbidelli, Bottke and collaborators, distributed at 2015-02-25
+00730560 ! number of cells in model
+0.100 ! step size in semi-major axis
+0.040 ! step size in eccentricity
+4.000 ! step size in inclination
+0.250 ! step size in absolute magnitude
+!
+! sma     ecc     inc    Hmag   probab.    sig prob.                source region probabilities                      sigma of source region probabilities             albedo cat.     sig. albedo cat. collprob. MOID
+!                                                     nu6     5/2     2/1     HUN     3/1     PHO     JFC     nu6     5/2     2/1     HUN     3/1     PHO     JFC               0.1
+!                                                                                                                                                                               0.3
