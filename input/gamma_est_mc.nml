@@ -9,6 +9,7 @@
          method = 1,
       filename  = '2016GE1_circular.txt',
      comparison = 0,
+           expo = 0.d0,
 /
 
 ! Input file for the program asteroid_brightening.x 
