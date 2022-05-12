@@ -22,8 +22,6 @@ function gen_distribV2(D, D_sigma, H, H_sigma, dadt_mean, dadt_sigma,...
         % constructed using the same albedo distribution
         H_sigma = 0.3;
         [sample_rho, sample_diam] = pdf_density_diameter(H, H_sigma, p, 50000);
-%        [diam, pdf_D]  = pdf_diam_complete_morby(H, H_sigma, p);
-%        sample_diam  = pdfrnd(diam, pdf_D, n);
    end
    
    % Distribution gamma

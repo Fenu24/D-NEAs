@@ -1,0 +1,30 @@
+&asteroid
+           C    = 680.d0,
+ thermalCondMin = 0.0000001d0,
+ thermalCondMax = 100.0d0,
+        semiaxm = 2.062846039108595d0,
+            ecc = 0.520469030432326d0,
+       absCoeff = 1.0d0,
+        emissiv = 0.984d0,
+         method = 1,
+      filename  = '2016GE1_circular.txt',
+     comparison = 0,
+/
+
+! Input file for the program asteroid_brightening.x 
+!
+! The values in input refers to
+!              C : heat capacity (J kg^-1 K^-1)
+! thermalCondMin : min thermal conductivity (W m^-1 K^-1) to search for solutions
+! thermalCondMax : max thermal conductivity (W m^-1 K^-1) to search for solutions 
+!        semiaxm : semimajor axis of the orbit (AU)
+!       absCoeff : absorption coefficient (m^-1)
+!        emissiv : emissivity (adimensional)
+!         method : choose the equation to use
+!                  1: Vokrouhlicky 1999
+!                  2: Vokrouhlicky et al 2017, eccentricity correction 
+!                  3: Xu et al 2020
+!       filaname : name of the output file, which goes in the folder output
+!     comparison : compare the output with the eccenticity in Yarkovsky
+!                  0: do not compare
+!                  1: compare
