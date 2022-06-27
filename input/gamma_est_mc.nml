@@ -1,5 +1,5 @@
 &asteroid 
-           C    = 680.d0,
+           C    = 600.d0,
  thermalCondMin = 0.0000001d0,
  thermalCondMax = 100.0d0,
         semiaxm = 2.0628,
@@ -8,6 +8,6 @@
         emissiv = 0.984d0,
          method = 2,
       filename  = '2016GE1.txt',
-     comparison = 0,
+       max_iter = 1000000,
            expo = 0.0,
 /

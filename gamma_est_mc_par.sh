@@ -1,7 +1,7 @@
 #/bin/bash
 
 function usage () {
-   echo " Usage: gamma_est_mc_batch.x <nproc>"
+   echo " Usage: gamma_est_mc_par.x <nproc>"
    exit 1
 }
 
