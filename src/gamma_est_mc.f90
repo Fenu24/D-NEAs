@@ -12,7 +12,7 @@ program gamma_est_mc
    real(kind=dkind) :: rho, C, Kmin, Kmax
    real(kind=dkind) :: radius 
    real(kind=dkind) :: kep(6)
-   real(kind=dkind) :: semiaxm, ecc
+   real(kind=dkind) :: semiaxm
    real(kind=dkind) :: gam
    real(kind=dkind) :: rotPer
    real(kind=dkind) :: epsi, alpha
@@ -50,8 +50,8 @@ program gamma_est_mc
    call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
    allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
    call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho, n_gamma, n_dadt, n_P)
+   ! Take the semimajor axis
    semiaxm = kep(1)
-   ecc     = kep(2)
    ! Write the input parameters on screen
    write(output_unit,screen_fmt_s) "====== INPUT PARAMETERS ======="
    write(output_unit,screen_fmt_d) "                               "
@@ -82,19 +82,21 @@ program gamma_est_mc
    open(unit=10, file='output/'//filename(1:len_trim(filename)),action='write')    
    ! Loop on the distributions of dadt, diameter, density and obliquity
    do iter=1, max_iter
+      ! Print the progressbar on screen
       call progress_bar(iter, max_iter)
       ! write(*,*) "iter ", iter 
+      ! Take a random combination of the input parameters
       call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll)
       ! Take the values of the parameters. Note that diameter and density comes in couples,
       ! since they are correlated by the albedo 
-      radius = diam_mc(hh)/2.d0 
-      ! TODO: here we could put a flag that says wether to take into account
+      radius    = diam_mc(hh)/2.d0 
+      ! TODO: here we could put a flag that says whether to take into account
       !       the correlation between rho and D or not... It would complicate
       !       the usage, but the code would be more flexible
       ! rho    = rho_mc(kk)
-      rho    = rho_mc(hh)
-      gam    = gamma_mc(jj) 
-      rotPer = period_mc(ll)
+      rho        = rho_mc(hh)
+      gam        = gamma_mc(jj) 
+      rotPer     = period_mc(ll)
       levelCurve = dadt_mc(ii)
       ! Invert the modeled vs. observed Yarkovsky drift equation
       call yarkoInvert(rho, C, radius, kep,&
@@ -124,17 +126,18 @@ end program gamma_est_mc
 ! INPUT:
 !
 ! OUTPUT:
-!              C : 
-! thermalCondMin : 
-! thermalCondMax : 
-!        semiaxm : 
-!            ecc : 
-!       absCoeff : 
-!        emissiv : 
-!         method : 
-!       filename : 
-!       max_iter : 
-!           expo : 
+!              C : fixed heat capacity          [J/kg/K]
+! thermalCondMin : minimum thermal conductivity [W/m/K]
+! thermalCondMax : maximum thermal conductivity [W/m/K]
+!            kep : Keplerian elements of the asteroid
+!       absCoeff : absorption coefficient
+!        emissiv : emissivity
+!         method : method used for the computation of the Yarkovsky drift 
+!                   1 = Analytical circular model
+!                   2 = Semi-Analytical model
+!       filename : name of the output file
+!       max_iter : maximum number of iterations for the Monte Carlo method
+!           expo : exponent of the variation of K along a non-circular trajectory
 subroutine readData(C, thermalCondMin, thermalCondMax, &
       &  kep, absCoeff, emissiv, method, filename, max_iter, expo)
    use used_const
@@ -164,12 +167,17 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    kep(6) = 0.d0 
 end subroutine readData
 
-! PURPOSE:
-!         
+! PURPOSE: Read the length of the files containing the input distributions for 
+!          diameter, density, obliquity, rotation period, and measured Yarkovsky drift
 !
 ! INPUT:
 !
 ! OUTPUT:
+!       n_D : length of the diameter distribution 
+!     n_rho : length of the density distribution
+!   n_gamma : length of the obliquity distribution
+!    n_dadt : length of the measured Yarkovsky drift distribution
+!       n_P : length of the rotation period distribution
 subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
    use used_const
    implicit none
@@ -231,15 +239,15 @@ subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
       n_P = n_P+1
    enddo
    close(5)
-
 end subroutine readLengths
 
-! PURPOSE:
-!         
+! PURPOSE: Read the files containing the input distributions of diameter, density, measured Yarkovsky drift, and rotation period
 !
 ! INPUT:
+! n_D, n_rho, n_gamma, n_dadt, n_P : length of the distribution files
 !
 ! OUTPUT:
+! diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc : vector containing the distributions
 subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho, n_gamma, n_dadt, n_P)
    ! Read the input distributions of diameter, density and obliquity
    use used_const
@@ -283,6 +291,13 @@ subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho,
    close(5)
 end subroutine readMCdata
 
+! PURPOSE: Print a progressbar on screen 
+!
+! INPUT:
+!     iter : current iteration number
+! max_iter : maximum number of iterations
+! 
+! OUTPUT:
 subroutine progress_bar(iter, max_iter)
    use iso_fortran_env, only: output_unit
    use used_const
@@ -304,12 +319,27 @@ end
 !=========== INVERSION OF YARKOVSKY DRIFT ===============
 !========================================================
 
-! PURPOSE:
-!         
+! PURPOSE: Given all the parameters of the Yarkovsky drift, finds the solutions of
+!          the measured vs. estimated Yarkovsky drift equation dadt = dadt_m
 !
 ! INPUT:
+!        rho : density                  [kg/m^3]
+!          C : heat capacity            [J/kg/K]
+!     radius : radius of the asteroid   [m]
+!        kep : vector of the Keplerian elements
+!        gam : obliquity                [deg]
+!     rotPer : rotation period          [h]
+!      alpha : absorption coefficient
+!       epsi : emissivity
+! levelCurve : measured Yarkovsky drift [au/My]
+!       kMin : min. K solution          [W/m/K]
+!       kMax : max. K solution          [W/m/K]
+!     method : method for the computation of the Yarkovsky drift
+!       expo : exponent of the K variation along the orbit
 !
 ! OUTPUT:
+!     nCross : number of solutions found
+!   kCrosses : vector of the K solutions
 subroutine yarkoInvert(rho, C, radius, kep, gam, rotPer, alpha, epsi, &
       & levelCurve, kMin, kMax, kCrosses, nCross, method, expo)
    use used_const
@@ -337,7 +367,7 @@ subroutine yarkoInvert(rho, C, radius, kep, gam, rotPer, alpha, epsi, &
    kCrosses = 0.d0
    K      = Kmin 
    ! Take the initial sign to see on which side of
-   ! the level curve are we
+   ! the level curve we are 
    if(method.eq.1)then
       call computeYarko_vokrouhlicky(rho, K, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
@@ -348,6 +378,7 @@ subroutine yarkoInvert(rho, C, radius, kep, gam, rotPer, alpha, epsi, &
    else
       flag = .false.
    endif
+   flagTmp = flag
    ! Start the loop on the thermal conductivity
    do while(K.le.Kmax)
       ! Variable deltaK for a good logarithmic discretization 
@@ -377,16 +408,30 @@ subroutine yarkoInvert(rho, C, radius, kep, gam, rotPer, alpha, epsi, &
          nCross = nCross + 1
          KCrosses(nCross) = kCross
       endif
-      K = K+deltaK
+      K = K + deltaK
    enddo 
 end subroutine yarkoInvert
 
-! PURPOSE:
+! PURPOSE: Bisection method for a more accurate computation of the solution
+!          of the observed vs measured Yarkovsky drift equation
 !         
-!
 ! INPUT:
+!        rho : density
+!          C : heat capacity
+!     radius : radius
+!        kep : Keplerian elements
+!        gam : obliquity
+!     rotPer : rotation period
+!      alpha : absorption coefficient
+!       epsi : emissivity
+!         Ka : left extreme of the bisection method
+!         Kb : right extreme of the bisection method
+! levelCurve : value of the measured Yarkovsky drift
+!     method : method of computation of the Yarkovsky drift
+!       expo : exponent for the variation of K along the orbit
 !
 ! OUTPUT:
+!     KCross : solution of the equation
 subroutine bisectionMethod(rho, C, radius, kep, gam, rotPer, alpha, epsi, Ka, Kb, levelCurve, KCross, method, expo)
    use used_const
    use yarko_force
@@ -453,12 +498,13 @@ end subroutine bisectionMethod
 !============= TO GENERATE RANDOM NUMBERS ===============
 !========================================================
 
-! PURPOSE:
-!         
+! PURPOSE: Generate random combinations for the input distributions
 !
 ! INPUT:
+! n_D, n_rho, n_gamma, n_dadt, n_P : length of the input distributions
 !
 ! OUTPUT:
+! rand_D, rand_rho, rand_gamma, rand_dadt, rand_P : random number generated between 0 and length
 subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, rand_D, rand_rho, rand_gamma, rand_dadt, rand_P)
    use used_const
    implicit none
