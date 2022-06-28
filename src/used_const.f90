@@ -7,10 +7,10 @@ module used_const
    implicit none
    private
    ! For FORTRAN programming
-   integer, parameter         :: dkind=kind(1.d0)
+   integer, parameter         :: dkind = kind(1.d0)
    ! Mathematical Constants 
-   real(kind=dkind),parameter :: pi = 3.14159265358979d0 
-   real(kind=dkind),parameter :: duepi = 2.d0*pi
+   real(kind=dkind),parameter :: pi      = 3.14159265358979d0 
+   real(kind=dkind),parameter :: twopi   = 2.d0*pi
    real(kind=dkind),parameter :: deg2rad = pi/180.d0
    real(kind=dkind),parameter :: rad2deg = 180.d0/pi
    ! ===========================================
@@ -40,7 +40,7 @@ module used_const
    real(kind=dkind), parameter :: yr2my = 1.d-6
    real(kind=dkind), parameter :: s2my  = s2y*yr2my
    ! Set the variables to public
-   public :: dkind, pi, duepi, deg2rad, rad2deg
+   public :: dkind, pi, twopi, deg2rad, rad2deg
    public :: uGc, gmSun, sBoltz, lumSun, au, au2m, m2au, clight
    public :: h2s, s2h, d2s, s2d, y2s, s2y, yr2my, s2my
 end module used_const

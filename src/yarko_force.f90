@@ -12,7 +12,6 @@ module yarko_force
    public :: computeYarko_vokrouhlicky,   computeYarkoMaxMin_vokrouhlicky, &
            & yarko_seasonal_vokrouhlicky, yarko_diurnal_vokrouhlicky, &
            & yarko_eccentric,             yarkovsky_vf 
-
    contains
    
    !============================================
@@ -143,7 +142,7 @@ module yarko_force
       ! Compute omega_rev 
       mu = gmsun+uGc*mAst
       omega_rev = sqrt(mu/(a0*au2m)**3.d0)
-      omega_rot = duepi/(rotPer*h2s)
+      omega_rot = twopi/(rotPer*h2s)
       ld = sqrt(K/(rho*C*omega_rot))
       ! Compute R'
       Rpd = R/ld
@@ -163,12 +162,14 @@ module yarko_force
       yarko_d = -8.d0*alpha*phi*F_omega_rot*cos(gam_rad)/(9.d0*omega_rev)
    end subroutine yarko_diurnal_vokrouhlicky
 
-   ! PURPOSE:
-   !         
+   ! PURPOSE: Evaluates the function of Eq. (A.7) in Fenucci et al. 2021
    !
-   ! INPUT:
+   ! INPUT: 
+   !     R : radius of the asteroid [m]
+   ! Theta : thermal parameter
    !
    ! OUTPUT:
+   !   Fnu : value of the function 
    subroutine Fnu_eval(R, Theta, Fnu)
       real(kind=dkind), intent(in)  :: R, Theta
       real(kind=dkind), intent(out) :: Fnu
@@ -198,12 +199,14 @@ module yarko_force
       Fnu = -k1*Theta/(1.d0 + 2.d0*k2*Theta + k3*Theta**2.d0)  
    end subroutine Fnu_eval
 
-   ! PURPOSE:
-   !         
+   ! PURPOSE: Computes the coefficients k1 k2 k3 for the evaluation of Eq. (A.7) of Fenucci et al. 2021
    !
    ! INPUT:
+   !          R : radius of the asteroid [m]
+   !      Theta : thermal parameter
    !
    ! OUTPUT:
+   ! k1, k2, k3 : values of the coefficients
    subroutine k1k2k3_eval(R, Theta, k1, k2, k3)
       real(kind=dkind), intent(in)  :: R, Theta
       real(kind=dkind), intent(out) :: k1, k2, k3
@@ -233,15 +236,24 @@ module yarko_force
    !==== FOR YARKOVSKY ON ECCENTRIC ORBITS ====
    !===========================================
 
-   ! PURPOSE: Vector field due to Yarkovsky effect
-   !          Ref:
-   !          Vokrouhlický et. al. 2017
-   !          Detailed Analysis of the Asteroid Pair (6070) Rheinland and (54827) 2001 NQ8
-   !         
+   ! PURPOSE: Compute the vector field due to Yarkovsky effect on a given position along the orbit
+   !          Ref: Vokrouhlický et. al. 2017, Detailed Analysis of the Asteroid Pair (6070) Rheinland and (54827) 2001 NQ8
    !
-   ! INPUT:
+   ! INPUT: 
+   !    kep : Keplerian elements of the asteroid
+   ! posvel : Cartesian elements (in SI units)
+   !    rho : density of the asteroid
+   !     K0 : thermal conductivity
+   !      C : heat capacity
+   !      R : radius
+   !    gam : obliquity
+   ! rotPer : rotation period
+   !  alpha : absorption coefficient
+   !   epsi : emissivity
+   !   expo : exponent for the variation of K along the orbit
    !
    ! OUTPUT:
+   !  yarko : Yarkovsky vector field
    subroutine yarkovsky_vf(kep, posvel, rho, K0, C, R, gam, rotPer, alpha, epsi, expo, yarko)
       real(kind=dkind), intent(in)  :: kep(6), posvel(6)
       real(kind=dkind), intent(in)  :: rho, K0, C 
@@ -277,12 +289,12 @@ module yarko_force
       vel(1:3) = posvel(4:6)
       ! Compute the mass of the asteroid
       mAst = 4.d0*pi*rho*R**3.d0/3.d0
-      mu   = gmsun+uGc*mAst
+      mu   = gmsun + uGc*mAst
       ! Convert the obliquity in radians
-      gam_rad = gam*deg2rad
+      gam_rad   = gam*deg2rad
       ! Compute the mean motion and the rotation frequency
       omega_rev = sqrt(mu/(kep(1)*au2m)**3.d0)
-      omega_rot = duepi/(rotPer*h2s)
+      omega_rot = twopi/(rotPer*h2s)
       ! Compute penetration depths
       ls = sqrt(K/(rho*C*omega_rev))
       ld = ls*sqrt(omega_rev/omega_rot)
@@ -300,8 +312,8 @@ module yarko_force
       ! Start computing e1 
       ! Take the angles defining the orbital plane
       inc    = kep(3)*deg2rad
-      omega  = kep(4)*deg2rad
-      Omnod  = kep(5)*deg2rad
+      Omnod  = kep(4)*deg2rad
+      omega  = kep(5)*deg2rad
       ! Rotation matrix of angle omega 
       co   = cos(omega)
       so   = sin(omega)
@@ -403,7 +415,7 @@ module yarko_force
       mu = gmsun+uGc*mAst
       meanMotion = sqrt(mu/(kep(1)*au2m)**3.d0)
       ! Compute the period
-      period = duepi
+      period   = twopi 
       deltaEll = period/float(npoints)
       ! Start evolution of the orbit, keeping fixed the elements and
       ! varying only the mean anomaly
@@ -439,12 +451,24 @@ module yarko_force
    end subroutine yarko_eccentric_ell
 
 
-   ! PURPOSE:
-   !         
+   ! PURPOSE: Compute the average of the Yarkovsky drift over an orbital period, by integrating the Yarkovsky vector field 
+   !          along the orbit. Note that the integration is done in eccentric anomaly, because it provides a better grid 
+   !          near the perihelion.
    !
    ! INPUT:
+   !    kep : Keplerian elements of the asteroid
+   !    rho : density of the asteroid
+   !      K : thermal conductivity
+   !      C : heat capacity
+   !      R : radius
+   !    gam : obliquity
+   ! rotPer : rotation period
+   !  alpha : absorption coefficient
+   !   epsi : emissivity
+   !   expo : exponent for the variation of K along the orbit
    !
    ! OUTPUT:
+   ! ecc_ye : averaged Yarkovsky effect over an orbital period
    subroutine yarko_eccentric(kep, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
       real(kind=dkind), intent(in)  :: kep(6), R
       real(kind=dkind), intent(in)  :: rho, K, C
@@ -467,7 +491,7 @@ module yarko_force
       mu = gmsun + uGc*mAst
       meanMotion = sqrt(mu/(kep(1)*au2m)**3)
       ! The period is always 2pi, compute the stepsize 
-      period = duepi
+      period = twopi 
       deltau = period/float(npoints)
       u      = 0.d0
       ! Start evolution of the orbit, keeping fixed the elements and
@@ -510,8 +534,8 @@ module yarko_force
    ! PURPOSE: Solve the Kepler equation ell = u - e sin u wrt u, using the Newton method
    !
    ! INPUT:
-   !    ell : mean anomaly
-   !    ecc : eccentricity
+   !    ell : mean anomaly [rad]
+   !    ecc : eccentricity [rad]
    !
    ! OUTPUT:
    !      u : eccentric anomaly
@@ -525,7 +549,7 @@ module yarko_force
       ! Set the first guess to pi
       uk   = pi
       ! Start the Newton method
-      elle = mod(ell, duepi)
+      elle = mod(ell, twopi)
       do j=1,jmax
          ukp1 = uk + (elle-uk+ecc*sin(uk))/(1.d0-ecc*cos(uk))
          ! When the difference is smaller than eps = 1.d-12, stop the iterations
@@ -537,14 +561,15 @@ module yarko_force
       u = ukp1
    end subroutine keplereq
 
-   ! PURPOSE:
+   ! PURPOSE: Converts Keplerian elements to Cartesian coordinates
    !         
-   !
    ! INPUT:
+   !    kep : Keplerian elements, semimajor axis in au, angles in degrees
    !
    ! OUTPUT:
+   !    car : Cartesian coordinates, in m for the positions and m/s for the velocities
    subroutine kep2car(kep, car)
-      real(kind=dkind),intent(in)  :: kep(6) ! Y are Delaunay elements
+      real(kind=dkind),intent(in)  :: kep(6) 
       real(kind=dkind),intent(out) :: car(6)
       !end interface
       real(kind=dkind) :: kappa, kappa2
@@ -590,7 +615,7 @@ module yarko_force
       R_i(3,2) = si
       R_i(3,3) = ci
       ! R_i*R_om
-      RiRom = MATMUL(R_i,R_om)
+      RiRom = matmul(R_i,R_om)
       ! Rotation matrix of angle omega for the asteroid
       con   = cos(Omnod)
       son   = sin(Omnod)
@@ -600,11 +625,11 @@ module yarko_force
       R_Omn(2,1) = son
       R_Omn(2,2) = con
       R_Omn(3,3) = 1.d0
-      ROmnRi = MATMUL(R_Omn,R_i)
+      ROmnRi = matmul(R_Omn,R_i)
       ! R_Omn*R_i*R_om
-      Rot = MATMUL(R_Omn,RiRom)
+      Rot = matmul(R_Omn,RiRom)
       ! Solve the Kepler equation
-      CALL keplereq(ell,ecc,u)
+      call keplereq(ell,ecc,u)
       cosu = cos(u)
       sinu = sin(u)
       ! Compute the position
@@ -617,15 +642,15 @@ module yarko_force
       dposdu(3,1) = 0.d0
       ! Compute the unit vector of the velocity and the norm 
       ! of the velocity
-      norma          = sqrt(DOT_PRODUCT(dposdu(1:3,1),dposdu(1:3,1)))
+      norma          = sqrt(dot_product(dposdu(1:3,1),dposdu(1:3,1)))
       versvel(1:3,1) = dposdu(1:3,1)/norma
-      normpos        = sqrt(DOT_PRODUCT(pos(1:3,1),pos(1:3,1)))
+      normpos        = sqrt(dot_product(pos(1:3,1),pos(1:3,1)))
       normvel        = kappa*sqrt(2.d0/normpos-1.d0/aa) 
       ! Compute the velocity vector
       vel(1:3,1)     = normvel*versvel(1:3,1)
       ! Rotate everything in the 3d space
-      tmpcar(1:3,1)  = MATMUL(Rot,pos(1:3,1))
-      tmpcar(4:6,1)  = MATMUL(Rot,vel(1:3,1))    
+      tmpcar(1:3,1)  = matmul(Rot,pos(1:3,1))
+      tmpcar(4:6,1)  = matmul(Rot,vel(1:3,1))    
       ! Store the result
       car(1:6) = tmpcar(1:6,1)
    end subroutine kep2car
@@ -649,12 +674,16 @@ module yarko_force
    !========== AVERAGING ============
    !=================================
 
-   ! PURPOSE: Implementation of the trapezoid rule for the computation of integrals
-   !         
+   ! PURPOSE: Computes the integral average of a function using the trapezoid rule 
    !
    ! INPUT: 
+   !    time : final integration time
+   !  deltaT : stepsize of the trapezoid rule
+   !     fun : vector containing the evaluations of the function to integrate
+   ! npoints : length of the fun vector
    !
    ! OUTPUT:
+   ! average : value of the integral average
    subroutine trapezoid_average(time, deltaT, fun, npoints, average)
       integer,          intent(in)  :: npoints
       real(kind=dkind), intent(in)  :: time, deltaT
@@ -662,7 +691,7 @@ module yarko_force
       real(kind=dkind), intent(out) :: average
       ! end interface
       real(kind=dkind) :: integral
-      integer :: j
+      integer          :: j
       ! Set the result to 0 
       integral = 0.d0
       ! Start adding the function evaluations
@@ -670,7 +699,7 @@ module yarko_force
          integral = integral + fun(j)
       enddo
       ! Add the first and last points
-      integral = integral + 0.5d0*(fun(1)+fun(npoints))
+      integral = integral + 0.5d0*(fun(1) + fun(npoints))
       ! Multiply for the step
       integral = integral*deltaT
       ! Divide by the total integration time
