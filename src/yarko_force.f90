@@ -242,8 +242,8 @@ module yarko_force
    ! INPUT:
    !
    ! OUTPUT:
-   subroutine yarkovsky_vf(a0, ecc, posvel, rho, K0, C, R, gam, rotPer, alpha, epsi, expo, yarko)
-      real(kind=dkind), intent(in)  :: a0, ecc, posvel(6)
+   subroutine yarkovsky_vf(kep, posvel, rho, K0, C, R, gam, rotPer, alpha, epsi, expo, yarko)
+      real(kind=dkind), intent(in)  :: kep(6), posvel(6)
       real(kind=dkind), intent(in)  :: rho, K0, C 
       real(kind=dkind), intent(in)  :: R
       real(kind=dkind), intent(in)  :: gam, rotPer
@@ -257,6 +257,12 @@ module yarko_force
       real(kind=dkind) :: mAst, mu
       real(kind=dkind) :: omega_rot, omega_rev
       real(kind=dkind) :: gam_rad
+      ! These angles are in radians
+      real(kind=dkind) :: inc, omega, OmNod
+      real(kind=dkind) :: co, so, ci, si, con, son
+      real(kind=dkind) :: R_om(3,3), R_i(3,3), R_Omn(3,3), RiRom(3,3), Rot(3,3)
+      ! Unit vector of the obliquity referred to the orbital plane
+      real(kind=dkind) :: e1_op(3)
       real(kind=dkind) :: kappa
       real(kind=dkind) :: Theta, gamma1, gamma2
       real(kind=dkind) :: Thetabar, gamma1bar, gamma2bar
@@ -275,7 +281,7 @@ module yarko_force
       ! Convert the obliquity in radians
       gam_rad = gam*deg2rad
       ! Compute the mean motion and the rotation frequency
-      omega_rev = sqrt(mu/(a0*au2m)**3.d0)
+      omega_rev = sqrt(mu/(kep(1)*au2m)**3.d0)
       omega_rot = duepi/(rotPer*h2s)
       ! Compute penetration depths
       ls = sqrt(K/(rho*C*omega_rev))
@@ -291,10 +297,49 @@ module yarko_force
       ! assumes that rho and C does not change with the 
       ! distance
       K       = K0*(dist*m2au)**(expo) 
-      ! Compute e1, assume zero inclination for the asteroid
-      e1(1) = sin(gam_rad)
-      e1(2) = 0.d0
-      e1(3) = cos(gam_rad)
+      ! Start computing e1 
+      ! Take the angles defining the orbital plane
+      inc    = kep(3)*deg2rad
+      omega  = kep(4)*deg2rad
+      Omnod  = kep(5)*deg2rad
+      ! Rotation matrix of angle omega 
+      co   = cos(omega)
+      so   = sin(omega)
+      R_om = 0.d0
+      R_om(1,1) = co
+      R_om(1,2) =-so
+      R_om(2,1) = so
+      R_om(2,2) = co
+      R_om(3,3) = 1.d0
+      ! Rotation matrix of angle inclination
+      ci  = cos(inc)
+      si  = sin(inc)
+      R_i = 0.d0
+      R_i(1,1) = 1.d0
+      R_i(2,2) = ci
+      R_i(2,3) =-si
+      R_i(3,2) = si
+      R_i(3,3) = ci
+      ! R_i*R_om
+      RiRom = MATMUL(R_i,R_om)
+      ! Rotation matrix of angle Omega for the asteroid
+      con   = cos(Omnod)
+      son   = sin(Omnod)
+      R_Omn = 0.d0
+      R_Omn(1,1) = con
+      R_Omn(1,2) =-son
+      R_Omn(2,1) = son
+      R_Omn(2,2) = con
+      R_Omn(3,3) = 1.d0
+      ! R_Omn*R_i*R_om: Rotation matrix for the transformation of a vector
+      ! from the orbital plane to the 3d space
+      Rot = MATMUL(R_Omn,RiRom)
+      ! Unit vector of the obliquity, with gamma defined wrt the orbital plane
+      e1_op(1) = sin(gam_rad)
+      e1_op(2) = 0.d0
+      e1_op(3) = cos(gam_rad)
+      ! Computation of e1 by rotation
+      e1 = matmul(Rot, e1_op)
       ! Compute e2
       call cross_prod(verspos, e1, e2)
       ! Compute e3
@@ -336,8 +381,8 @@ module yarko_force
    !
    ! OUTPUT:
    ! TODO: this is deprecated, it can be deleted
-   subroutine yarko_eccentric_ell(semiaxm, ecc, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
-      real(kind=dkind), intent(in)  :: semiaxm, ecc, R
+   subroutine yarko_eccentric_ell(kep, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
+      real(kind=dkind), intent(in)  :: kep(6), R
       real(kind=dkind), intent(in)  :: rho, K, C
       real(kind=dkind), intent(in)  :: gam, rotPer
       real(kind=dkind), intent(in)  :: alpha, epsi
@@ -347,24 +392,16 @@ module yarko_force
       real(kind=dkind)   :: meanMotion, mAst, mu, period
       real(kind=dkind)   :: time, deltaTime
       real(kind=dkind)   :: deltaEll
-      real(kind=dkind)   :: kep(6), car(6)
+      real(kind=dkind)   :: car(6), kep_c(6)
       real(kind=dkind)   :: pos(3), vel(3), yarko(3)
       integer, parameter :: npoints = 500
       real(kind=dkind)   :: dadt(npoints+1)
-      real(kind=dkind)   :: normvel
       integer :: j
       ! Compute the mass of the asteroid
       mAst = 4.d0*pi*rho*R**3.d0/3.d0
       ! Compute the mean motion of the asteroid
       mu = gmsun+uGc*mAst
-      meanMotion = sqrt(mu/(semiaxm*au2m)**3.d0)
-      ! Define the Keplerian elements of the orbits, in standard units
-      kep(1) = semiaxm*au2m
-      kep(2) = ecc
-      kep(3) = 0.d0
-      kep(4) = 0.d0
-      kep(5) = 0.d0
-      kep(6) = 0.d0
+      meanMotion = sqrt(mu/(kep(1)*au2m)**3.d0)
       ! Compute the period
       period = duepi
       deltaEll = period/float(npoints)
@@ -377,21 +414,22 @@ module yarko_force
       !        ell = u - e sin u
       !       and use constant u. Maybe we can also change the coordinates:
       !       \int f(l) dl = \int f(l(u)) dl/du du = \int f(l(u)) (1-e cos(u)) du
-      do while(kep(6).lt.period)
+      kep_c    = kep 
+      kep_c(6) = 0.d0
+      do while(kep_c(6).lt.period)
          ! Compute the mean anomaly
-         kep(6) = float(j-1)*deltaEll
+         kep_c(6) = float(j-1)*deltaEll
          ! Convert from Keplerian elements to Cartesian elements
          ! Cartesian elements are in standard units
-         call kep2car(kep, car)
+         call kep2car(kep_c, car)
          ! Take position and velocity
          pos(1:3) = car(1:3)
          vel(1:3) = car(4:6)
-         normvel = norm2(vel)
          ! Compute the Yarkovsky vector field
-         call yarkovsky_vf(semiaxm, ecc, car, rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
+         call yarkovsky_vf(kep_c, car, rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
          ! Vary the force with the eccentricity of the orbit
          ! Here dadt is in standard units, km/s
-         dadt(j) = 2.d0*dot_product(yarko, vel)/(meanMotion**2.d0*semiaxm*au2m)
+         dadt(j) = 2.d0*dot_product(yarko, vel)/(meanMotion**2.d0*kep(1)*au2m)
          ! Convert the rate of change in AU/My and save the result
          dadt(j) = dadt(j)*m2au/s2my
          j = j+1
@@ -407,8 +445,8 @@ module yarko_force
    ! INPUT:
    !
    ! OUTPUT:
-   subroutine yarko_eccentric(semiaxm, ecc, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
-      real(kind=dkind), intent(in)  :: semiaxm, ecc, R
+   subroutine yarko_eccentric(kep, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
+      real(kind=dkind), intent(in)  :: kep(6), R
       real(kind=dkind), intent(in)  :: rho, K, C
       real(kind=dkind), intent(in)  :: gam, rotPer
       real(kind=dkind), intent(in)  :: alpha, epsi
@@ -418,24 +456,16 @@ module yarko_force
       real(kind=dkind)   :: meanMotion, mAst, mu, period
       real(kind=dkind)   :: time, deltaTime
       real(kind=dkind)   :: u, ell, deltau, dldu
-      real(kind=dkind)   :: kep(6), car(6)
+      real(kind=dkind)   :: car(6), kep_c(6)
       real(kind=dkind)   :: pos(3), vel(3), yarko(3)
       integer, parameter :: npoints = 500
       real(kind=dkind)   :: dadt(npoints+1)
-      real(kind=dkind)   :: normvel
       integer            :: j
       ! Compute the mass of the asteroid
       mAst = 4.d0*pi*rho*R**3/3.d0
       ! Compute the mean motion of the asteroid
       mu = gmsun + uGc*mAst
-      meanMotion = sqrt(mu/(semiaxm*au2m)**3)
-      ! Define the Keplerian elements of the orbits, in standard units
-      kep(1) = semiaxm*au2m
-      kep(2) = ecc
-      kep(3) = 0.d0
-      kep(4) = 0.d0
-      kep(5) = 0.d0
-      kep(6) = 0.d0
+      meanMotion = sqrt(mu/(kep(1)*au2m)**3)
       ! The period is always 2pi, compute the stepsize 
       period = duepi
       deltau = period/float(npoints)
@@ -447,25 +477,23 @@ module yarko_force
       !        ell = u - e sin u
       ! The integral is done by changing coordinates:
       !       \int f(l) dl = \int f(l(u)) dl/du du = \int f(l(u)) (1-e cos(u)) du
+      kep_c = kep
       do while(u.lt.period)
          u = float(j-1)*deltau
          ! Compute the mean anomaly
-         kep(6) = u - ecc*sin(u)
+         kep_c(6) = (u - kep(2)*sin(u))*rad2deg
          ! Convert from Keplerian elements to Cartesian elements
          ! Cartesian elements are in standard units
-         ! TODO: this conversion could be done more efficiently, since the 
-         !       orbit is planar...
-         call kep2car(kep, car)
+         call kep2car(kep_c, car)
          ! Take position and velocity
          pos(1:3) = car(1:3)
          vel(1:3) = car(4:6)
-         normvel  = norm2(vel)
          ! Compute the Yarkovsky vector field
-         call yarkovsky_vf(semiaxm, ecc, car, rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
+         call yarkovsky_vf(kep_c, car, rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
          ! Vary the force with the eccentricity of the orbit
          ! Here dadt is in standard units, km/s
-         dldu    = 1.d0 - ecc*cos(u)
-         dadt(j) = 2.d0*dot_product(yarko, vel)/(meanMotion**2*semiaxm*au2m)*dldu
+         dldu    = 1.d0 - kep(2)*cos(u)
+         dadt(j) = 2.d0*dot_product(yarko, vel)/(meanMotion**2*kep(1)*au2m)*dldu
          ! Convert the rate of change in AU/My and save the result
          dadt(j) = dadt(j)*m2au/s2my
          j = j+1
@@ -524,22 +552,21 @@ module yarko_force
       real(kind=dkind) :: L,G,Z,ell,omeg,Omnod
       real(kind=dkind) :: ci,si,co,so,con,son, cl, sl
       real(kind=dkind) :: didG,didZ
-      real(kind=dkind),dimension(3,3) :: R_om,R_i,R_Omn
-      real(kind=dkind),dimension(3,3) :: RiRom,ROmnRi
-      real(kind=dkind),dimension(3,3) :: dR_om,dR_i,dR_Omn !,dRomRi,RomdRi
-      real(kind=dkind),dimension(3,3) :: Rot,dRotdOmn,dRotdi,dRotdi_tmp,dRotdom
+      real(kind=dkind),dimension(3,3) :: R_om, R_i,R_Omn
+      real(kind=dkind),dimension(3,3) :: RiRom, ROmnRi
+      real(kind=dkind),dimension(3,3) :: Rot
       real(kind=dkind) :: pos(3,1)
       real(kind=dkind) :: u,sinu,cosu
       real(kind=dkind) :: dposdu(3,1),vel(3,1),versvel(3,1),normvel
       real(kind=dkind) :: tmpcar(6,1),norma,normpos
       kappa  = sqrt(gmSun)
       kappa2 = kappa**2.d0
-      aa     = kep(1)
+      aa     = kep(1)*au2m
       ecc    = kep(2)
       inc    = kep(3)*deg2rad
-      omeg   = kep(4)
-      Omnod  = kep(5)
-      ell    = kep(6)
+      omeg   = kep(4)*deg2rad
+      Omnod  = kep(5)*deg2rad
+      ell    = kep(6)*deg2rad
       ! Delaunay Elements
       L = kappa*sqrt(aa)
       G = L*sqrt(1.d0-ecc**2)
