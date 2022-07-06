@@ -1,8 +1,11 @@
-!      Authors: Marco Fenucci, Bojan Novakovic, Dusan Marceta
-!  Institution: University of Belgrade
-!         Date: July 2022
+! ################################################################
+! #      Authors: Marco Fenucci, Bojan Novakovic, Dusan Marceta  #
+! # Institution: University of Belgrade                          #
+! #        Date: July 2022                                       #
+! ################################################################
 !
 ! PURPOSE: This module contains mathematical and physical constants
+!
 module used_const
    implicit none
    private

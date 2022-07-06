@@ -43,17 +43,17 @@ touch make.flags
 if [ $conf = "intel" ]; then
   echo "FC=ifort" >> make.flags
   if [ $opt = "d" ]; then
-    echo "FFLAGS=-module .mod -warn nousage -g -CB -shared-intel -mcmodel=medium -traceback -fp-model fast -save -assume byterecl" >> make.flags
+    echo "FFLAGS=-module .mod -warn nousage -g -CB -shared-intel -mcmodel=medium -traceback -fp-model fast -assume byterecl -qopenmp" >> make.flags
   else
-    echo "FFLAGS=-module .mod -warn nousage -O -mp1 -shared-intel -mcmodel=medium -save -assume byterecl" >> make.flags
+    echo "FFLAGS=-module .mod -warn nousage -O -mp1 -shared-intel -mcmodel=medium -assume byterecl -qopenmp" >> make.flags
   fi
 fi
 
 if [ $conf = "gfortran" ]; then
   echo "FC=gfortran" >> make.flags
   if [ $opt = "d" ]; then
-    echo "FFLAGS=-J.mod -g -O0 -fbounds-check -pedantic -fbacktrace -fcheck=all" >> make.flags
+    echo "FFLAGS=-J.mod -g -O0 -fbounds-check -pedantic -fbacktrace -fcheck=all -fopenmp" >> make.flags
   else
-    echo "FFLAGS=-J.mod -g -O2" >> make.flags
+    echo "FFLAGS=-J.mod -g -O2 -fopenmp" >> make.flags
   fi
 fi
