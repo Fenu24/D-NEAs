@@ -1,2 +1,2 @@
-FC=gfortran
-FFLAGS=-J.mod -g -O2
+FC=ifort
+FFLAGS=-module .mod -warn nousage -O -mp1 -shared-intel -mcmodel=medium -qopenmp -assume byterecl

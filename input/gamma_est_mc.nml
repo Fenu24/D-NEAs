@@ -1,5 +1,5 @@
 &asteroid 
-           C    = 1000.d0,
+           C    = 1200.d0,
  thermalCondMin = 1.e-8,
  thermalCondMax = 500.0d0,
         semiaxm = 2.062821384283469d0,
@@ -7,9 +7,10 @@
        absCoeff = 1.0d0,
         emissiv = 0.984d0,
          method = 2,
-      filename  = '2016GE1_1000_orbfit.txt',
+      filename  = 'test.txt',
        max_iter = 1000000,
            expo = 0.d0,
+         n_proc = 90,
 /
 
 

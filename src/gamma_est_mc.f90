@@ -40,14 +40,16 @@ program gamma_est_mc
    integer          :: hh, kk, jj, ii, ll
    integer          :: iter
    integer          :: max_iter 
+   ! Number of processors for the main do loop
+   integer          :: n_proc
    ! Formats for the output
    character(len=*), parameter :: screen_fmt_d = '(a32, f20.15)'
    character(len=*), parameter :: screen_fmt_i = '(a32, i9)'
    character(len=*), parameter :: screen_fmt_s = '(a32)'
-   character(len=*), parameter :: screen_fmt_f = '(a32, a20)'
+   character(len=*), parameter :: screen_fmt_f = '(a32, a50)'
    character(len=*), parameter ::    out_fmt   = '(5(e20.14, 2x))'
    ! Read input data
-   call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo)
+   call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo, n_proc)
    ! Read the distributions of diameter, density and obliquity
    call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
    allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
@@ -66,8 +68,9 @@ program gamma_est_mc
    write(output_unit,screen_fmt_s) "                               "
    write(output_unit,screen_fmt_s) "SIMULATION PARAMETERS:         "
    write(output_unit,screen_fmt_i) "             Yarkovsky model = ", method 
-   write(output_unit,screen_fmt_i) "                  Max. iter. = ", max_iter
    write(output_unit,screen_fmt_d) "          K scaling exponent = ", expo
+   write(output_unit,screen_fmt_i) "                  Max. iter. = ", max_iter
+   write(output_unit,screen_fmt_i) "              Number of CPUs = ", n_proc
    write(output_unit,screen_fmt_s) "                               " 
    write(output_unit,screen_fmt_s) "OUTPUT OPTIONS:                "
    write(output_unit,screen_fmt_f) "             Output filename = ", filename
@@ -77,7 +80,8 @@ program gamma_est_mc
    ! Initialize the seed for the generation of random numbers
    call init_random_seed()
    open(unit=10, file='output/'//filename(1:len_trim(filename)),action='write')    
-   call omp_set_num_threads(150)
+   ! Set the number of processors to use for the main do loop
+   call omp_set_num_threads(n_proc)
    ! Loop on the distributions of dadt, diameter, density and obliquity
    !$OMP PARALLEL DEFAULT(private) SHARED(max_iter, alpha, epsi, kMin, kMax, method, expo, n_D, n_rho, n_gamma, n_dadt, n_P, rho_mc,gamma_mc, period_mc, dadt_mc, diam_mc, C, semiaxm, ecc)
    !$OMP DO
@@ -146,8 +150,9 @@ end program gamma_est_mc
 !       filename : name of the output file
 !       max_iter : maximum number of iterations for the Monte Carlo method
 !           expo : exponent of the variation of K along a non-circular trajectory
+!         n_proc : number of processors to use for the parallel runs
 subroutine readData(C, thermalCondMin, thermalCondMax, &
-      &  semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo)
+      &  semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo, n_proc)
    use used_const
    implicit none
    real(kind=dkind), intent(out) :: C
@@ -159,9 +164,10 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    integer,          intent(out) :: method 
    character(80),    intent(out) :: filename
    integer,          intent(out) :: max_iter
+   integer,          intent(out) :: n_proc
    ! end interface
    namelist /asteroid/ C, thermalCondMin, thermalCondMax, &
-      & semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo
+      & semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo, n_proc
    ! read the input namelist
    open(unit=1,file="input/gamma_est_mc.nml",status="old",action="read")
    read(1,asteroid)

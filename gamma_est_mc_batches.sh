@@ -12,7 +12,6 @@ fi
 
 nproc=$1
 
-
 cd data
 # Delete possible old links
 rm * 2> /dev/null
