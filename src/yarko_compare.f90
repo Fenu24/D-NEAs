@@ -29,7 +29,7 @@ program yarko_compare
    write(*,*) "Par: ", kep(1), kep(2), rho, K, C, R, gam, rotPer, alpha, epsi, expo
    call computeYarko_circular(rho, K, C, R, kep(1), gam, rotPer, alpha, epsi, yarko_v)
    call yarko_eccentric(kep(1), kep(2), rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko_ell)
-   call yarko_eccentric2(kep(1), kep(2), rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko_ell2)
+!   call yarko_eccentric2(kep(1), kep(2), rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko_ell2)
    write(*,*) "Yarko circular       ", yarko_v
    write(*,*) "Yarko eccentric      ", yarko_ell
    write(*,*) "Yarko eccentric2     ", yarko_ell2

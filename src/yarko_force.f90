@@ -1,5 +1,5 @@
 ! ################################################################
-! #      Authors: Marco Fenucci, Bojan Novakovic, Dusan Marceta  #
+! #      Authors: Marco Fenucci, Bojan Novaković, Dušan Marceta  #
 ! # Institution: University of Belgrade                          #
 ! #        Date: July 2022                                       #
 ! ################################################################
@@ -13,7 +13,8 @@ module yarko_force
    private ::  Fnu_eval, cross_prod, kep2car, keplereq, trapezoid_average
    ! Public subroutines
    public :: computeYarko_circular,   computeYarkoMaxMin_circular, &
-           & yarko_eccentric,             yarkovsky_vf , yarko_eccentric2
+           & yarko_eccentric,         yarkovsky_vf, &
+           & yarko_eccentric_2l,      yarkovsky_vf_2l
    contains
    
    !============================================
@@ -374,7 +375,6 @@ module yarko_force
       real(kind=dkind), intent(out) :: ecc_ye
       ! end interface
       real(kind=dkind)   :: meanMotion, mAst, mu, period
-      real(kind=dkind)   :: time, deltaTime
       real(kind=dkind)   :: u, ell, deltau, dldu
       real(kind=dkind)   :: car(6), kep(6)
       real(kind=dkind)   :: pos(3), vel(3), yarko(3)
@@ -427,22 +427,113 @@ module yarko_force
       call trapezoid_average(period, deltau, dadt, npoints, ecc_ye)
    end subroutine yarko_eccentric
 
-   subroutine yarko_eccentric2(semiaxm, ecc, rho, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
+   !===========================================
+   !======= TWO LAYERS YARKOVSKY MODEL ========
+   !===========================================
+
+   subroutine yarkovsky_vf_2l(semiaxm, ecc, posvel, rho, rho_surf, K0, C, R, gam, rotPer, alpha, epsi, expo, yarko)
+      real(kind=dkind), intent(in)  :: semiaxm, ecc, posvel(6)
+      real(kind=dkind), intent(in)  :: rho, rho_surf, K0, C 
+      real(kind=dkind), intent(in)  :: R
+      real(kind=dkind), intent(in)  :: gam, rotPer
+      real(kind=dkind), intent(in)  :: alpha, epsi
+      real(kind=dkind), intent(in)  :: expo
+      real(kind=dkind), intent(out) :: yarko(3)
+      ! end interface
+      real(kind=dkind) :: K
+      real(kind=dkind) :: pos(3), vel(3)
+      real(kind=dkind) :: E_star, T_star
+      real(kind=dkind) :: mAst, mu
+      real(kind=dkind) :: omega_rot, omega_rev
+      real(kind=dkind) :: gam_rad
+      ! Unit vector of the obliquity referred to the orbital plane
+      real(kind=dkind) :: kappa
+      real(kind=dkind) :: Theta, gamma1, gamma2
+      real(kind=dkind) :: Thetabar, gamma1bar, gamma2bar
+      real(kind=dkind) :: ls, ld, Rps, Rpd, k1, k2, k3
+      real(kind=dkind) :: verspos(3), dist
+      real(kind=dkind) :: aux(3)
+      real(kind=dkind) :: normalvec(3), normnormalvec
+      real(kind=dkind) :: coeff1
+      real(kind=dkind) :: e1(3), e2(3), e3(3)
+      ! Take position and velocity
+      pos(1:3) = posvel(1:3)
+      vel(1:3) = posvel(4:6)
+      ! Compute the mass of the asteroid
+      mAst = 4.d0*pi*rho*R**3.d0/3.d0
+      mu   = gmsun + uGc*mAst
+      ! Convert the obliquity in radians
+      gam_rad   = gam*deg2rad
+      ! Compute the mean motion and the rotation frequency
+      omega_rev = sqrt(mu/(semiaxm*au2m)**3.d0)
+      omega_rot = twopi/(rotPer*h2s)
+      ! Compute penetration depths
+      ls = sqrt(K/(rho_surf*C*omega_rev))
+      ld = ls*sqrt(omega_rev/omega_rot)
+      ! Compute the unit vectors
+      ! e1 = s : unit vector of the spin axis
+      ! e2 = n x s where n = pos/|pos|
+      ! e3 = s x (n x s) = s x e2 = e1 x e2
+      dist    = norm2(pos)
+      verspos = pos/dist
+      ! Compute the thermal conductivity as a function
+      ! of the distance from the Sun. This formulation
+      ! assumes that rho and C does not change with the 
+      ! distance
+      K       = K0*(dist*m2au)**(expo) 
+      ! Start computing e1 
+      e1(1) = sin(gam_rad)
+      e1(2) = 0.d0 
+      e1(3) = cos(gam_rad)
+      ! Compute e2
+      call cross_prod(verspos, e1, e2)
+      ! Compute e3
+      call cross_prod(e1, e2, e3)
+      ! Compute the solar flux and the subsolar temperature
+      E_star = lumSun/(4.d0*pi*dist**2.d0)
+      T_star = (alpha*E_star/(epsi*sBoltz))**0.25d0
+      ! Compute the k coefficient
+      kappa = 4.d0*alpha*pi*R**2.d0*E_star/(9.d0*mAst*cLight)
+      ! Compute the coefficients of e2 and e3, representing the diurnal effect
+      Rpd    = R/ld
+      Theta  = sqrt(rho_surf*K*C*omega_rot)/(epsi*sBoltz*T_star**3.d0)
+      call k1k2k3_eval(Rpd, Theta, k1, k2, k3) 
+      gamma1 = -k1*Theta/(1.d0 + 2.d0*k2*Theta + k3*Theta**2.d0)
+      gamma2 = (1.d0 + k2*Theta)/(1.d0 + 2.d0*k2*Theta + k3*Theta**2.d0)
+      ! Compute the coefficient of e1, representing the seasonal effect
+      Rps       = R/ls
+      Thetabar  = sqrt(rho_surf*K*C*omega_rev)/(epsi*sBoltz*T_star**3.d0)
+      call k1k2k3_eval(Rps, Thetabar, k1, k2, k3) 
+      gamma1bar = -k1*Thetabar/(1.d0 + 2.d0*k2*Thetabar + k3*Thetabar**2.d0)
+      gamma2bar = (1.d0 + k2*Thetabar)/(1.d0 + 2.d0*k2*Thetabar + k3*Thetabar**2.d0)
+      ! Compute the normal vector to the orbital plane, N
+      call cross_prod(pos, vel, normalvec)
+      normnormalvec = norm2(normalvec)
+      normalvec = normalvec/normnormalvec
+      ! Compute N x n = N x pos/|pos|
+      call cross_prod(normalvec, verspos, aux)  
+      ! Compute the coefficient of e1
+      ! \bar{gamma2} n \cdot s + \var{gamma1} (N x n) \cdot s
+      coeff1 = gamma2bar*dot_product(verspos, e1) + gamma1bar*dot_product(aux, e1)
+      ! Compute the total vector field of the Yarkovksy drift
+      yarko = kappa*(coeff1*e1 + gamma1*e2 + gamma2*e3)
+   end subroutine yarkovsky_vf_2l
+
+   subroutine yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K, C, R, gam, rotPer, alpha, epsi, expo, ecc_ye)
       real(kind=dkind), intent(in)  :: semiaxm, ecc
       real(kind=dkind), intent(in)  :: R
-      real(kind=dkind), intent(in)  :: rho, K, C
+      real(kind=dkind), intent(in)  :: rho, rho_surf, K, C
       real(kind=dkind), intent(in)  :: gam, rotPer
       real(kind=dkind), intent(in)  :: alpha, epsi
       real(kind=dkind), intent(in)  :: expo
       real(kind=dkind), intent(out) :: ecc_ye
       ! end interface
       real(kind=dkind)   :: meanMotion, mAst, mu, period
-      real(kind=dkind)   :: time, deltaTime
       real(kind=dkind)   :: u, ell, deltau, dldu
       real(kind=dkind)   :: car(6), kep(6)
       real(kind=dkind)   :: pos(3), vel(3), yarko(3)
       integer, parameter :: npoints = 500
-      real(kind=dkind)   :: dadt(npoints+1)
+      real(kind=dkind)   :: dadt(npoints)
       integer            :: j
       ! Compute the mass of the asteroid
       mAst = 4.d0*pi*rho*R**3/3.d0
@@ -451,8 +542,7 @@ module yarko_force
       meanMotion = sqrt(mu/(semiaxm*au2m)**3)
       ! The period is always 2pi, compute the stepsize 
       period = twopi 
-      deltau = period/float(npoints)
-      u      = 0.d0
+      deltau = period/float(npoints-1)
       ! Set the Keplerian elements
       kep(1) = semiaxm*au2m
       kep(2) = ecc 
@@ -462,12 +552,11 @@ module yarko_force
       kep(6) = 0.d0
       ! Start evolution of the orbit, keeping fixed the elements and
       ! varying only the eccentric anomaly
-      j = 1
       ! Here we integrate in the eccentric anomaly u. The relation with the mean anomaly ell is 
       !        ell = u - e sin u
       ! The integral is done by changing coordinates:
       !       \int f(l) dl = \int f(l(u)) dl/du du = \int f(l(u)) (1-e cos(u)) du
-      do while(u.lt.period)
+      do j=1, npoints
          u = float(j-1)*deltau
          ! Compute the mean anomaly
          kep(6) = u - ecc*sin(u)
@@ -478,21 +567,19 @@ module yarko_force
          pos(1:3) = car(1:3)
          vel(1:3) = car(4:6)
          ! Compute the Yarkovsky vector field
-         call yarkovsky_vf(semiaxm, ecc, car, rho, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
+         call yarkovsky_vf_2l(semiaxm, ecc, car, rho, rho_surf, K, C, R, gam, rotPer, alpha, epsi, expo, yarko)
          ! Vary the force with the eccentricity of the orbit
          ! Here dadt is in standard units, km/s
          dldu    = 1.d0 - ecc*cos(u)
          dadt(j) = 2.d0*dot_product(yarko, vel)/(meanMotion**2*semiaxm*au2m)*dldu
          ! Convert the rate of change in AU/My and save the result
          dadt(j) = dadt(j)*m2au/s2my
-         write(*,*) "kep ", kep
+         !write(*,*) "kep ", kep
          !write(*,*) "dadt ", dadt(j)
-         j = j+1
       enddo
       ! Average the Yarkovsky force over the period
-      call trapezoid_average(period, deltau, dadt, npoints+1, ecc_ye)
-   end subroutine yarko_eccentric2
-
+      call trapezoid_average(period, deltau, dadt, npoints, ecc_ye)
+   end subroutine yarko_eccentric_2l
 
    !=====================================================
    !============== CHANGE OF COORDINATES ================
