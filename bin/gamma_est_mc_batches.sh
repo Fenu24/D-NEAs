@@ -54,6 +54,22 @@ function help () {
    exit 1
 }
 
+function createParamFile () {
+   echo "&asteroid"                      > gamma_est_mc.nml
+   echo "              C = $C,"         >> gamma_est_mc.nml
+   echo " thermalCondMin = $Kmin,"      >> gamma_est_mc.nml
+   echo " thermalCondMax = $Kmax,"      >> gamma_est_mc.nml
+   echo "        semiaxm = $sma,"       >> gamma_est_mc.nml
+   echo "            ecc = $ecc,"       >> gamma_est_mc.nml
+   echo "       absCoeff = $alpha,"     >> gamma_est_mc.nml
+   echo "        emissiv = $epsi,"      >> gamma_est_mc.nml
+   echo "         method = $method,"    >> gamma_est_mc.nml
+   echo "      filename  = '$obj.txt'," >> gamma_est_mc.nml
+   echo "       max_iter = $max_iter,"  >> gamma_est_mc.nml
+   echo "           expo = $expo,"      >> gamma_est_mc.nml
+   echo "         n_proc = 1,"          >> gamma_est_mc.nml
+   echo "/"                             >> gamma_est_mc.nml
+} 
 
 # Read the input flags
 while test $# -gt 0; do
@@ -151,7 +167,7 @@ fi
 if [ -z "$epsi" ]; then
    epsi=1.d0
 fi
-if [ -z "$aplha" ]; then
+if [ -z "$alpha" ]; then
    alpha=1.d0
 fi
 
@@ -173,37 +189,32 @@ echo "      Absorprion coeff.: $alpha    "
 echo "             Emissivity: $epsi     "
 echo "          Yarko. method: $method   "
 echo "        Max. iterations: $max_iter "
+echo "                                   "
+echo "-------------------------------    "
 
-exit 1
+while IFS=" " read -r obj sma ecc ; do
+   echo " "  
 
-cd data
-# Delete possible old links
-#rm * 2> /dev/null
-# Take the directory list
-ls -d */ | sed -e "s/\///g" > directory_list
-cd ..
-
-while IFS=" " read -r dir ; do
-   cd data
-
-   #rm *.txt 2> /dev/null
-   #rm ../input/gamma_est_mc.nml 2> /dev/null
+   cd input
+   # Remove old distribution files
+   rm gamma_est_mc.nml 2> /dev/null
+   rm *.txt            2> /dev/null
    
-   ln -s $dir/diam_mc.txt
-   ln -s $dir/rho_mc.txt
-   ln -s $dir/period_mc.txt
-   ln -s $dir/gamma_mc.txt
-   ln -s $dir/dadt_mc.txt
+   # Put symbolic links to the distributions of
+   ln -s ../data/$obj/diam_mc.txt    
+   ln -s ../data/$obj/rho_mc.txt     
+   ln -s ../data/$obj/period_mc.txt  
+   ln -s ../data/$obj/gamma_mc.txt   
+   ln -s ../data/$obj/dadt_mc.txt    
 
-   cd ../input 
-   
-   ln -s ../data/$dir/gamma_est_mc.nml 
+   # Create the gamma_est_mc.nml for $obj
+   createParamFile $C $Kmin $Kmax $sma $ecc $alpha $epsi $method $obj $max_iter $expo
 
+   # Go back to the previous folder
    cd ..
 
-   echo " $dir "
-
-   ./gamma_est_mc.x & 2> /dev/null 
+   # Lunch the process
+   ./gamma_est_mc.x & 2>/dev/null
 
    sleep 1
 
@@ -216,10 +227,6 @@ while IFS=" " read -r dir ; do
       currRunning=$(ps -el | grep gamma_est_mc.x | wc -l)
    done
 
-done < data/directory_list 
+done < $list 
 
 wait
-
-cd ..
-
-
