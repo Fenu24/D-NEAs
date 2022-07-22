@@ -11,8 +11,38 @@ program gamma_est_mc
    use used_const
    use yarko_force,     only: yarko_eccentric
    implicit none
+   ! Interfaces for the subroutines with optional arguments
+   interface
+      subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
+         implicit none
+         integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P
+         integer, optional, intent(out) :: n_rho_surf
+      end subroutine
+
+      subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
+         use used_const
+         real(kind=dkind),           intent(out) :: diam_mc(:)
+         real(kind=dkind),           intent(out) :: rho_mc(:)
+         real(kind=dkind),           intent(out) :: gamma_mc(:)
+         real(kind=dkind),           intent(out) :: dadt_mc(:)
+         real(kind=dkind),           intent(out) :: period_mc(:)
+         real(kind=dkind), optional, intent(out) :: rho_surf_mc(:)
+      end subroutine
+
+      subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, &
+            & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, &
+            & n_rho_surf, rand_rho_surf)
+         use used_const
+         implicit none
+         integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P
+         integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P
+         integer, optional, intent(in)  :: n_rho_surf
+         integer, optional, intent(out) :: rand_rho_surf
+      end subroutine
+
+   end interface
    ! Parameters of the Yarkovsky modeling
-   real(kind=dkind) :: rho, C, Kmin, Kmax
+   real(kind=dkind) :: rho, rho_surf, C, Kmin, Kmax
    real(kind=dkind) :: radius 
    real(kind=dkind) :: semiaxm, ecc
    real(kind=dkind) :: gam
@@ -27,9 +57,9 @@ program gamma_est_mc
    ! 3 = 2-layers semi-analytical eccentric model
    integer          :: method 
    ! Length of the input distribution files
-   integer          :: n_D, n_rho, n_gamma, n_dadt, n_P
+   integer          :: n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf
    ! Variables for the input distribution files
-   real(kind=dkind), allocatable,  dimension(:) :: diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc
+   real(kind=dkind), allocatable,  dimension(:) :: diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc
    ! Vector containing the solutions of the modeled vs. measured Yarkovsky drift
    real(kind=dkind) :: Kcross(6)
    integer          :: nCross
@@ -38,7 +68,8 @@ program gamma_est_mc
    ! Output filename
    character(80)    :: filename
    ! Variables for the main do loop
-   integer          :: hh, kk, jj, ii, ll, zz
+   integer          :: hh, kk, jj, ii, ll, zz, mm
+   integer, allocatable, dimension(:,:) :: rnd_comb
    integer          :: iter
    integer          :: max_iter 
    ! Number of processors for the main do loop
@@ -51,10 +82,21 @@ program gamma_est_mc
    character(len=*), parameter ::    out_fmt   = '(5(e20.14, 2x))'
    ! Read input data
    call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo, n_proc)
-   ! Read the distributions of diameter, density and obliquity
-   call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
-   allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
-   call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho, n_gamma, n_dadt, n_P)
+   ! Read the distributions of diameter, density and obliquity, depending on the method used
+   if(method.eq.3)then
+      ! Call readLengths asking also for n_rho_surf
+      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
+      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
+      allocate(rho_surf_mc(1:n_rho_surf))
+      allocate(rnd_comb(6, max_iter))
+      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
+   elseif(method.eq.1 .or. method.eq.2)then
+      ! Call readLengths without asking for rho_surf
+      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
+      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
+      allocate(rnd_comb(5, max_iter))
+      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc)
+   endif
    ! Write the input parameters on screen
    write(output_unit,screen_fmt_s) "====== INPUT PARAMETERS ======="
    write(output_unit,screen_fmt_d) "                               "
@@ -81,22 +123,50 @@ program gamma_est_mc
    ! Initialize the seed for the generation of random numbers
    call init_random_seed()
    open(unit=10, file='output/'//filename(1:len_trim(filename)),action='write')    
+   ! Generate the random numbers all at the beginning. This is done because 
+   ! the intrinsic function random_number() does not work properly with
+   ! multiple threads
+   do iter=1, max_iter
+      if(method.eq.1.or. method.eq.2)then
+         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll)
+         rnd_comb(1, iter) = hh
+         rnd_comb(2, iter) = kk
+         rnd_comb(3, iter) = jj
+         rnd_comb(4, iter) = ii
+         rnd_comb(5, iter) = ll
+      else
+         ! If model = 3, ask also for the combination for the surface density
+         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll, n_rho_surf, mm)
+         rnd_comb(1, iter) = hh
+         rnd_comb(2, iter) = kk
+         rnd_comb(3, iter) = jj
+         rnd_comb(4, iter) = ii
+         rnd_comb(5, iter) = ll
+         rnd_comb(6, iter) = mm
+      endif
+   enddo
    ! Set the number of processors to use for the main do loop
    call omp_set_num_threads(n_proc)
    ! Loop on the distributions of dadt, diameter, density and obliquity
-   !$OMP PARALLEL DEFAULT(private) SHARED(max_iter, alpha, epsi, kMin, kMax, &
-   !$OMP& method, expo, n_D, n_rho, n_gamma, n_dadt, n_P, rho_mc, gamma_mc,  &
-   !$OMP& period_mc, dadt_mc, diam_mc, C, semiaxm, ecc, n_proc)
+   !$OMP PARALLEL DEFAULT(private) SHARED(max_iter, alpha, epsi, kMin, kMax, method, expo, &
+   !$OMP& n_D, n_rho, n_gamma, n_dadt, n_P, rho_mc, gamma_mc, period_mc, dadt_mc, diam_mc, &
+   !$OMP& C, semiaxm, ecc, rnd_comb, n_proc, rho_surf_mc, n_rho_surf)
+   !!$OMP PARALLEL DEFAULT(shared) PRIVATE(hh, kk, jj, ii, ll, zz, radius, rho, gam, levelCurve, kCross, nCross, thermalInertia)
    !$OMP DO
    do iter=1, max_iter
-      ! Print the progressbar on screen
-      !call progress_bar(iter, max_iter)
+      ! Print the progressbar on screen only if the number of CPUs is 1
+      if(n_proc.eq.1)then
+         call progress_bar(iter, max_iter)
+      endif
       !write(*,*) "iter ", iter 
-      ! Take a random combination of the input parameters
-      call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll)
+      hh = rnd_comb(1, iter)
+      kk = rnd_comb(2, iter)
+      jj = rnd_comb(3, iter)
+      ii = rnd_comb(4, iter)
+      ll = rnd_comb(5, iter)
       ! Take the values of the parameters. Note that diameter and density comes in couples,
       ! since they are correlated by the albedo 
-      radius    = diam_mc(hh)/2.d0 
+      radius     = diam_mc(hh)/2.d0 
       ! TODO: here we could put a flag that says whether to take into account
       !       the correlation between rho and D or not... It would complicate
       !       the usage, but the code would be more flexible
@@ -107,8 +177,18 @@ program gamma_est_mc
       levelCurve = dadt_mc(ii)
       !write(*,*) radius, rho, gam, rotPer, levelCurve 
       ! Invert the modeled vs. observed Yarkovsky drift equation
-      call yarkoInvert(rho, C, radius, semiaxm, ecc, &
-         & gam, rotPer, alpha, epsi, levelCurve, kMin, kMax, kCross, nCross, method, expo)
+      if(method.eq.1 .or. method.eq.2)then
+         call yarkoInvert(rho, rho, C, radius, semiaxm, ecc, &
+            & gam, rotPer, alpha, epsi, levelCurve, kMin, kMax, kCross, nCross, method, expo)
+      else
+         ! Take the integer for the surface density
+         mm = rnd_comb(6, iter)
+         ! Take the value of the surface density
+         rho_surf = rho_surf_mc(mm)
+         ! Call yarkoInvert with the surface density as additional parameter
+         call yarkoInvert(rho, rho_surf, C, radius, semiaxm, ecc, &
+            & gam, rotPer, alpha, epsi, levelCurve, kMin, kMax, kCross, nCross, method, expo)
+      endif
       ! Write the result on the output file
       ! TODO: Here we can put 
       !       1) the format for the output
@@ -175,6 +255,28 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    open(unit=1,file="input/gamma_est_mc.nml",status="old",action="read")
    read(1,asteroid)
    close(1)
+   ! Check for errors in the input file
+   if(C.lt.0.d0)then
+      write(*,*) "ERROR. Heat capacity must be positive. Selected: ", C
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(thermalCondMin.lt.0.d0 .or. thermalCondMax.lt.thermalCondMin)then
+      write(*,*) "ERROR. The thermal conductivity interval must be positive."
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(max_iter.le.0)then
+      write(*,*) "ERROR. max_iter must be positive."
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(n_proc.lt.1)then
+      write(*,*) "ERROR. Number of processors must be at least 1. Selected: ", n_proc
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(method.lt.1 .or. method.gt.3)then
+      write(*,*) " ERROR: method can only be 1, 2 or 3. Selected: ", method
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   endif
 end subroutine readData
 
 ! PURPOSE: Read the length of the files containing the input distributions for 
@@ -188,10 +290,11 @@ end subroutine readData
 !   n_gamma : length of the obliquity distribution
 !    n_dadt : length of the measured Yarkovsky drift distribution
 !       n_P : length of the rotation period distribution
-subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
+subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
    use used_const
    implicit none
-   integer, intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P
+   integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P
+   integer, optional, intent(out) :: n_rho_surf
    ! end interface
    real(kind=dkind) :: x
    integer          :: flag
@@ -249,6 +352,19 @@ subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
       n_P = n_P+1
    enddo
    close(5)
+
+   if(present(n_rho_surf))then
+      open(unit=6, file='input/rho_surf_mc.txt', status='old')
+      n_rho_surf = 0
+      do 
+         read(6,*,iostat=flag) x 
+         if(flag.lt.0)then
+            exit
+         endif
+         n_rho_surf = n_rho_surf+1
+      enddo
+      close(6)
+   endif
 end subroutine readLengths
 
 ! PURPOSE: Read the files containing the input distributions of diameter, density, measured Yarkovsky drift, and rotation period
@@ -258,18 +374,24 @@ end subroutine readLengths
 !
 ! OUTPUT:
 ! diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc : vector containing the distributions
-subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho, n_gamma, n_dadt, n_P)
-   ! Read the input distributions of diameter, density and obliquity
+subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
    use used_const
    implicit none
-   integer,          intent(in)   :: n_D, n_rho, n_gamma, n_dadt, n_P
-   real(kind=dkind), intent(out)  :: diam_mc(1:n_D)
-   real(kind=dkind), intent(out)  :: rho_mc(1:n_rho)
-   real(kind=dkind), intent(out)  :: gamma_mc(1:n_gamma)
-   real(kind=dkind), intent(out)  :: dadt_mc(1:n_dadt)
-   real(kind=dkind), intent(out)  :: period_mc(1:n_P)
+   real(kind=dkind),           intent(out) :: diam_mc(:)
+   real(kind=dkind),           intent(out) :: rho_mc(:)
+   real(kind=dkind),           intent(out) :: gamma_mc(:)
+   real(kind=dkind),           intent(out) :: dadt_mc(:)
+   real(kind=dkind),           intent(out) :: period_mc(:)
+   real(kind=dkind), optional, intent(out) :: rho_surf_mc(:)
    ! end interface
+   integer :: n_D, n_rho, n_gamma, n_dadt, n_P,  n_rho_surf
    integer :: i
+   n_D     = size(diam_mc,1)
+   n_rho   = size(rho_mc,1)
+   n_gamma = size(gamma_mc,1)
+   n_dadt  = size(dadt_mc,1)
+   n_P     = size(period_mc,1)
+
    open(unit=1, file='input/diam_mc.txt', status='old')
    do i=1,n_D
       read(1,*) diam_mc(i)
@@ -299,6 +421,15 @@ subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, n_D, n_rho,
       read(5,*) period_mc(i)
    enddo
    close(5)
+
+   if(present(rho_surf_mc))then
+      n_rho_surf = size(rho_surf_mc,1)
+      open(unit=6, file='input/rho_surf_mc.txt', status='old')
+      do i=1,n_rho_surf
+         read(6,*) rho_surf_mc(i)
+      enddo
+      close(6)
+   endif
 end subroutine readMCdata
 
 ! PURPOSE: Print a progressbar on screen 
@@ -313,7 +444,7 @@ subroutine progress_bar(iter, max_iter)
    use used_const
    integer, intent(in) :: iter, max_iter
    ! end interface
-   integer :: uu
+   integer          :: uu
    character(len=1) :: bar, back, dot
    back = char(8)
    bar  = '='
@@ -334,6 +465,7 @@ end
 !
 ! INPUT:
 !        rho : density                  [kg/m^3]
+!   rho_surf : density of the surface   [kg/m^3] NOTE: if method = 1,2 this variable is not used
 !          C : heat capacity            [J/kg/K]
 !     radius : radius of the asteroid   [m]
 !    semiaxm : semimajor axis of the asteroid 
@@ -351,19 +483,19 @@ end
 ! OUTPUT:
 !     nCross : number of solutions found
 !   kCrosses : vector of the K solutions
-subroutine yarkoInvert(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
+subroutine yarkoInvert(rho, rho_surf, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
       & levelCurve, kMin, kMax, kCrosses, nCross, method, expo)
    use used_const
    use yarko_force
    implicit none
    real(kind=dkind), intent(in)  :: semiaxm, ecc
-   real(kind=dkind), intent(in)  :: rho, C, radius, gam, rotPer
+   real(kind=dkind), intent(in)  :: rho, C, radius, gam, rotPer, rho_surf
    real(kind=dkind), intent(in)  :: alpha, epsi, levelCurve
    real(kind=dkind), intent(in)  :: Kmin, Kmax
    real(kind=dkind), intent(in)  :: expo
    real(kind=dkind), intent(out) :: kCrosses(6)
-   integer, intent(out)          :: nCross
-   integer, intent(in)           :: method
+   integer,          intent(out) :: nCross
+   integer,          intent(in)  :: method
    ! end interface
    real(kind=dkind) :: K, deltaK
    real(kind=dkind) :: expK
@@ -373,13 +505,18 @@ subroutine yarkoInvert(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
    ! Initialize the variables storing the crosses
    nCross   = 0
    kCrosses = 0.d0
-   K      = Kmin 
+   K        = Kmin 
    ! Take the initial sign to see on which side of
    ! the level curve we are 
    if(method.eq.1)then
+      ! Call the circular model 
       call computeYarko_circular(rho, K, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
-       call yarko_eccentric(semiaxm, ecc, rho, K, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+      ! Call the eccentric model 
+      call yarko_eccentric(semiaxm, ecc, rho, K, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+   elseif(method.eq.3)then
+      ! Call the 2-layer model
+      call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
    endif
    if(yarko-levelCurve.gt.0)then
       flag = .true.
@@ -397,6 +534,8 @@ subroutine yarkoInvert(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
          call computeYarko_circular(rho, K, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
       elseif(method.eq.2)then
          call yarko_eccentric(semiaxm, ecc, rho, K, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+      elseif(method.eq.3)then
+         call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
       endif
       ! Check if we crossed the level curve 
       if(yarko-levelCurve.gt.0)then
@@ -411,8 +550,13 @@ subroutine yarkoInvert(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
          ! Restore the flag and start a bisection 
          ! method to find the exact point
          flag   = flagTmp
-         call bisectionMethod(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
-            & K-deltaK, K, levelCurve, KCross, method, expo)
+         if(method.eq.1 .or. method.eq.2)then
+            call bisectionMethod(rho, rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
+               & K-deltaK, K, levelCurve, KCross, method, expo)
+         elseif(method.eq.3)then
+            call bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, &
+               & K-deltaK, K, levelCurve, KCross, method, expo)
+         endif
          nCross = nCross + 1
          KCrosses(nCross) = kCross
       endif
@@ -425,6 +569,7 @@ end subroutine yarkoInvert
 !         
 ! INPUT:
 !        rho : density
+!   rho_surf : density of the surface   NOTE: if method = 1,2 this variable is not used
 !          C : heat capacity
 !     radius : radius
 !    semiaxm : semimajor axis of the asteroid 
@@ -441,11 +586,12 @@ end subroutine yarkoInvert
 !
 ! OUTPUT:
 !     KCross : solution of the equation
-subroutine bisectionMethod(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, epsi, Ka, Kb, levelCurve, KCross, method, expo)
+subroutine bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, &
+      & rotPer, alpha, epsi, Ka, Kb, levelCurve, KCross, method, expo)
    use used_const
    use yarko_force
    implicit none
-   real(kind=dkind), intent(in)  :: semiaxm, ecc
+   real(kind=dkind), intent(in)  :: semiaxm, ecc, rho_surf
    real(kind=dkind), intent(in)  :: rho, C, radius, gam, rotPer, alpha, epsi
    real(kind=dkind), intent(in)  :: Ka, Kb, levelCurve
    real(kind=dkind), intent(in)  :: expo 
@@ -468,12 +614,16 @@ subroutine bisectionMethod(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, eps
      call computeYarko_circular(rho, K1, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
      call yarko_eccentric(semiaxm, ecc, rho, K1, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+   elseif(method.eq.3)then
+     call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K1, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
    endif
    FK1 = yarko-levelCurve
    if(method.eq.1)then
       call computeYarko_circular(rho, K2, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
       call yarko_eccentric(semiaxm, ecc, rho, K2, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+   elseif(method.eq.3)then
+      call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K2, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
    endif
    FK2 = yarko-levelCurve
    do n=1, nmax
@@ -482,6 +632,8 @@ subroutine bisectionMethod(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, eps
          call computeYarko_circular(rho, Kmean, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
       elseif(method.eq.2)then
          call yarko_eccentric(semiaxm, ecc, rho, Kmean, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
+      elseif(method.eq.3)then
+         call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, Kmean, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
       endif
       FKmean = yarko-levelCurve
       if((K2-K1)/2.d0 .lt. tol)then
@@ -496,7 +648,8 @@ subroutine bisectionMethod(rho, C, radius, semiaxm, ecc, gam, rotPer, alpha, eps
       endif
    enddo
    if(n.eq.nmax)then
-      write(*,*) "Warning!! Bisection method failed!!"
+      write(*,*) "ERROR. Bisection method failed!!"
+      write(*,*) " STOPPING PROGRAM."
       stop
    endif
 end subroutine bisectionMethod
@@ -512,23 +665,31 @@ end subroutine bisectionMethod
 !
 ! OUTPUT:
 ! rand_D, rand_rho, rand_gamma, rand_dadt, rand_P : random number generated between 0 and length
-subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, rand_D, rand_rho, rand_gamma, rand_dadt, rand_P)
+subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, &
+      & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, &
+      & n_rho_surf, rand_rho_surf)
    use used_const
    implicit none
-   integer, intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P
-   integer, intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P
+   integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P
+   integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P
+   integer, optional, intent(in)  :: n_rho_surf
+   integer, optional, intent(out) :: rand_rho_surf
    ! end interface
    real(kind=dkind) :: u
    call random_number(u)
-   rand_D     = 1 + FLOOR((n_D)*u)
+   rand_D     = 1 + floor((n_D)*u)
    call random_number(u)
-   rand_rho   = 1 + FLOOR((n_rho)*u)
+   rand_rho   = 1 + floor((n_rho)*u)
    call random_number(u)
-   rand_gamma = 1 + FLOOR((n_gamma)*u)
+   rand_gamma = 1 + floor((n_gamma)*u)
    call random_number(u)
-   rand_dadt  = 1 + FLOOR((n_dadt)*u)
+   rand_dadt  = 1 + floor((n_dadt)*u)
    call random_number(u)
-   rand_P     = 1 + FLOOR((n_P)*u)
+   rand_P     = 1 + floor((n_P)*u)
+   if(present(n_rho_surf) .and. present(rand_rho_surf))then
+      call random_number(u)
+      rand_rho_surf = 1 + floor((n_rho_surf)*u)
+   endif
 end subroutine random_combination
 
 

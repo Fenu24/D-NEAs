@@ -1,34 +1,34 @@
 #!/bin/bash
 
 usage () {
-	echo "Usage: config [options] <configuration>"
-	echo "       where one of the following options must be selected: "
-	echo "          -d  (debug)"
-	echo "          -O  (optimized)"
-	echo "       and <configuration> is one of the following:"
+   echo "Usage: config [options] <configuration>"
+   echo "       where one of the following options must be selected: "
+   echo "          -d  (debug)"
+   echo "          -O  (optimized)"
+   echo "       and <configuration> is one of the following:"
         echo "          intel   (Intel Fortran95 compiler vers. 8 and later)"
         echo "          gfortran (GNU F95 compiler) requires gcc 4.1 and later "
-	exit 1
+   exit 1
 }
 
 if [ $# -lt 1 ]; then
-	usage
+   usage
 fi
 
 # Compilation options (debug/optimize)
 opt="d"
 if [ "$1" = "-d" ]; then
-	opt="d"
-	shift
+   opt="d"
+   shift
 elif [ "$1" = "-p" ]; then
-	opt="p"
-	shift
+   opt="p"
+   shift
 elif [ "$1" = "-O" ]; then
-	opt="O"
-	shift
+   opt="O"
+   shift
 fi
 if [ $# -ne 1 ]; then
-	usage
+   usage
 fi
 
 # Configuration
@@ -57,3 +57,4 @@ if [ $conf = "gfortran" ]; then
     echo "FFLAGS=-J.mod -g -O2 -fopenmp" >> make.flags
   fi
 fi
+
