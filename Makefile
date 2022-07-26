@@ -32,7 +32,7 @@ $(BIN)/$(EXE1): $(OBJ1)
 	$(FC) $(FFLAGS) $^ -o $@ $(LINK)
 
 links_ex:
-	rm -rf *.x 2>/dev/null 
+	rm -rf *.x *batches.sh 2>/dev/null 
 	ln -s bin/$(EXE0)
 	ln -s bin/$(EXE1)
 	ln -s bin/gamma_est_mc_batches.sh

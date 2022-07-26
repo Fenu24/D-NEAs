@@ -39,7 +39,6 @@ program gamma_est_mc
          integer, optional, intent(in)  :: n_rho_surf
          integer, optional, intent(out) :: rand_rho_surf
       end subroutine
-
    end interface
    ! Parameters of the Yarkovsky modeling
    real(kind=dkind) :: rho, rho_surf, C, Kmin, Kmax
@@ -79,7 +78,10 @@ program gamma_est_mc
    character(len=*), parameter :: screen_fmt_i = '(a32, i9)'
    character(len=*), parameter :: screen_fmt_s = '(a32)'
    character(len=*), parameter :: screen_fmt_f = '(a32, a50)'
-   character(len=*), parameter ::    out_fmt   = '(5(e20.14, 2x))'
+   character(len=*), parameter ::    out_fmt1  = '(5(e20.14, 2x))'
+   character(len=*), parameter ::    out_fmt2  = '(6(e20.14, 2x))'
+   integer                     :: ierr
+   logical                     :: is_present
    ! Read input data
    call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo, n_proc)
    ! Read the distributions of diameter, density and obliquity, depending on the method used
@@ -122,7 +124,14 @@ program gamma_est_mc
    write(output_unit,screen_fmt_s) "Running simulation...          "
    ! Initialize the seed for the generation of random numbers
    call init_random_seed()
-   open(unit=10, file='output/'//filename(1:len_trim(filename)),action='write')    
+   ! Open the output file
+   open(unit=10, file='output/'//filename(1:len_trim(filename))//'.txt',action='write')    
+   ! Check if the done file is present. If it is, delete it
+   inquire(file='output/'//filename(1:len_trim(filename))//'.done', exist=is_present)
+   if(is_present)then
+      open(unit=11, file='output/'//filename(1:len_trim(filename))//'.done', status="old", iostat=ierr)
+      if(ierr == 0)close (11,status="delete")
+   endif
    ! Generate the random numbers all at the beginning. This is done because 
    ! the intrinsic function random_number() does not work properly with
    ! multiple threads
@@ -175,7 +184,13 @@ program gamma_est_mc
       gam        = gamma_mc(jj) 
       rotPer     = period_mc(ll)
       levelCurve = dadt_mc(ii)
-      !write(*,*) radius, rho, gam, rotPer, levelCurve 
+      ! If for some reason the rotation period is negative, 
+      ! just skip the iteration
+      if(rotPer.lt.0.d0)then
+         ! TODO: Do we want to put these occurrences in a file?
+         !       Like a .log file
+         cycle
+      endif
       ! Invert the modeled vs. observed Yarkovsky drift equation
       if(method.eq.1 .or. method.eq.2)then
          call yarkoInvert(rho, rho, C, radius, semiaxm, ecc, &
@@ -196,8 +211,13 @@ program gamma_est_mc
       if(nCross.ne.0)then
          !$OMP CRITICAL
          do zz = 1, nCross
-            thermalInertia = sqrt(rho*KCross(zz)*C)
-            write(10, out_fmt)  KCross(zz), thermalInertia, rho, 2.d0*radius, gam
+            if(method.eq.1 .or. method.eq.2)then
+               thermalInertia = sqrt(rho*KCross(zz)*C)
+               write(10, out_fmt1)  KCross(zz), thermalInertia, rho, 2.d0*radius, gam
+            elseif(method.eq.3)then
+               thermalInertia = sqrt(rho_surf*KCross(zz)*C)
+               write(10, out_fmt2)  KCross(zz), thermalInertia, rho, rho_surf, 2.d0*radius, gam
+            endif
          enddo
          !$OMP END CRITICAL
       endif
@@ -208,6 +228,9 @@ program gamma_est_mc
    write(output_unit,*) "Done"
    close(10)
    deallocate(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc)
+   ! Create the .done file
+   open(unit=11, file='output/'//filename(1:len_trim(filename))//'.done', action='write')
+   close(11)
 end program gamma_est_mc 
 
 !========================================================

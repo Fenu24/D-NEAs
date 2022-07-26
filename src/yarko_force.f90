@@ -622,114 +622,23 @@ module yarko_force
    !
    ! OUTPUT:
    !    car : Cartesian coordinates, in m for the positions and m/s for the velocities
-   subroutine kep2car_bak(kep, car)
+   subroutine kep2car(kep, car)
       real(kind=dkind),intent(in)  :: kep(6) 
       real(kind=dkind),intent(out) :: car(6)
       !end interface
       real(kind=dkind) :: kappa, kappa2
       real(kind=dkind) :: inc, ecc, aa
-      real(kind=dkind) :: L,G,Z,ell,omeg,Omnod
+      real(kind=dkind) :: L, G, Z, ell, omeg, Omnod
       real(kind=dkind) :: ci,si,co,so,con,son, cl, sl
-      real(kind=dkind) :: didG,didZ
-      real(kind=dkind),dimension(3,3) :: R_om, R_i,R_Omn
-      real(kind=dkind),dimension(3,3) :: RiRom, ROmnRi
-      real(kind=dkind),dimension(3,3) :: Rot
-      real(kind=dkind) :: pos(3,1)
-      real(kind=dkind) :: u,sinu,cosu
-      real(kind=dkind) :: dposdu(3,1),vel(3,1),versvel(3,1),normvel
-      real(kind=dkind) :: tmpcar(6,1),norma,normpos
-      kappa  = sqrt(gmSun)
-      kappa2 = kappa**2.d0
-      aa     = kep(1)*au2m
-      ecc    = kep(2)
-      inc    = kep(3)*deg2rad
-      omeg   = kep(4)*deg2rad
-      Omnod  = kep(5)*deg2rad
-      ell    = kep(6)*deg2rad
-      ! Delaunay Elements
-      L = kappa*sqrt(aa)
-      G = L*sqrt(1.d0-ecc**2)
-      Z = G*cos(inc)
-      ! Rotation matrix of angle omega for the asteroid
-      co   = cos(omeg)
-      so   = sin(omeg)
-      R_om = 0.d0
-      R_om(1,1) = co
-      R_om(1,2) =-so
-      R_om(2,1) = so
-      R_om(2,2) = co
-      R_om(3,3) = 1.d0
-      ! Rotation matrix of angle Inclination for the asteroid
-      ci  = cos(inc)
-      si  = sin(inc)
-      R_i = 0.d0
-      R_i(1,1) = 1.d0
-      R_i(2,2) = ci
-      R_i(2,3) =-si
-      R_i(3,2) = si
-      R_i(3,3) = ci
-      ! R_i*R_om
-      RiRom = matmul(R_i,R_om)
-      ! Rotation matrix of angle omega for the asteroid
-      con   = cos(Omnod)
-      son   = sin(Omnod)
-      R_Omn = 0.d0
-      R_Omn(1,1) = con
-      R_Omn(1,2) =-son
-      R_Omn(2,1) = son
-      R_Omn(2,2) = con
-      R_Omn(3,3) = 1.d0
-      ROmnRi = matmul(R_Omn,R_i)
-      ! R_Omn*R_i*R_om
-      Rot = matmul(R_Omn,RiRom)
-      ! Solve the Kepler equation
-      call keplereq(ell,ecc,u)
-      cosu = cos(u)
-      sinu = sin(u)
-      ! Compute the position
-      pos(1,1) = aa*(cosu - ecc)
-      pos(2,1) = aa*sqrt(1.d0-ecc**2)*sinu 
-      pos(3,1) = 0.d0 
-      ! Compute the derivative of the position wrt u
-      dposdu(1,1) = L**2/kappa2*(-sinu)
-      dposdu(2,1) = L*G*cosu/kappa2
-      dposdu(3,1) = 0.d0
-      ! Compute the unit vector of the velocity and the norm 
-      ! of the velocity
-      norma          = sqrt(dot_product(dposdu(1:3,1),dposdu(1:3,1)))
-      versvel(1:3,1) = dposdu(1:3,1)/norma
-      normpos        = sqrt(dot_product(pos(1:3,1),pos(1:3,1)))
-      normvel        = kappa*sqrt(2.d0/normpos-1.d0/aa) 
-      ! Compute the velocity vector
-      vel(1:3,1)     = normvel*versvel(1:3,1)
-      ! Rotate everything in the 3d space
-      tmpcar(1:3,1)  = matmul(Rot,pos(1:3,1))
-      tmpcar(4:6,1)  = matmul(Rot,vel(1:3,1))    
-      ! Store the result
-      car(1:6) = tmpcar(1:6,1)
-   end subroutine kep2car_bak
-
-   subroutine kep2car(kep, car)
-      real(kind=dkind),intent(in)  :: kep(6) ! Y are Delaunay elements
-      real(kind=dkind),intent(out) :: car(6)
-      !end interface
-      real(kind=dkind) :: kappa, kappa2
-      real(kind=dkind) :: inc, ecc, aa
-      real(kind=dkind) :: L,G,Z,ell,omeg,Omnod
-      real(kind=dkind) :: ci,si,co,so,con,son, cl, sl
-      real(kind=dkind) :: didG,didZ
-      real(kind=dkind),dimension(3,3) :: R_om,R_i,R_Omn
-      real(kind=dkind),dimension(3,3) :: RiRom,ROmnRi
-      real(kind=dkind),dimension(3,3) :: dR_om,dR_i,dR_Omn !,dRomRi,RomdRi
-      real(kind=dkind),dimension(3,3) :: Rot,dRotdOmn,dRotdi,dRotdi_tmp,dRotdom
+      real(kind=dkind) ::  R_om(3,3),    R_i(3,3), R_Omn(3,3)
+      real(kind=dkind) :: RiRom(3,3), ROmnRi(3,3),   Rot(3,3)
       real(kind=dkind) :: pos(3,1)
       real(kind=dkind) :: dposdell(3,1)
-      real(kind=dkind) :: dposdL(3,1),dposdG(3,1),dposdZ(3,1)
-      real(kind=dkind) :: u,sinu,cosu,dcosudL,dcosudG,dudell,dudL,dudG,dudecc
-      real(kind=dkind) :: deccdL,deccdG
+      real(kind=dkind) :: u, sinu, cosu
       real(kind=dkind) :: dposdu(3,1),vel(3,1),versvel(3,1),normvel
       real(kind=dkind) :: tmpcar(6,1),norma,normpos
-      kappa = sqrt(gmSun)!*au2m**(-1.5d0)*d2s
+      ! Take the gravitional constant
+      kappa = sqrt(gmSun)
       kappa2 = kappa**2.d0
       aa    = kep(1)
       ecc   = kep(2)
