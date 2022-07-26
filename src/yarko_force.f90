@@ -640,75 +640,73 @@ module yarko_force
       ! Take the gravitional constant
       kappa = sqrt(gmSun)
       kappa2 = kappa**2.d0
+      ! Take the orbital elements
       aa    = kep(1)
       ecc   = kep(2)
       inc   = kep(3)*deg2rad
       omeg  = kep(4)
       Omnod = kep(5)
       ell   = kep(6)
-
+      ! Convert into Delaunay elements
       L = kappa*sqrt(aa)
       G = L*sqrt(1.d0-ecc**2)
       Z = G*cos(inc)
-       
       ! Rotation matrix of angle omega for the asteroid
-      co=cos(omeg)
-      so=sin(omeg)
+      co   = cos(omeg)
+      so   = sin(omeg)
       R_om = 0.d0
       R_om(1,1) = co
       R_om(1,2) =-so
       R_om(2,1) = so
       R_om(2,2) = co
       R_om(3,3) = 1.d0
-
       ! Rotation matrix of angle Inclination for the asteroid
-      ci = cos(inc)
-      si = sin(inc)
+      ci  = cos(inc)
+      si  = sin(inc)
       R_i = 0.d0
       R_i(1,1) = 1.d0
       R_i(2,2) = ci
       R_i(2,3) =-si
       R_i(3,2) = si
       R_i(3,3) = ci
-      
       ! R_i*R_om
-      RiRom = MATMUL(R_i,R_om)
-      
+      RiRom = matmul(R_i,R_om)
       ! Rotation matrix of angle omega for the asteroid
-      con=cos(Omnod)
-      son=sin(Omnod)
+      con   = cos(Omnod)
+      son   = sin(Omnod)
       R_Omn = 0.d0
       R_Omn(1,1) = con
       R_Omn(1,2) =-son
       R_Omn(2,1) = son
       R_Omn(2,2) = con
       R_Omn(3,3) = 1.d0
-    
-      ROmnRi = MATMUL(R_Omn,R_i)
+      ROmnRi = matmul(R_Omn,R_i)
       ! R_Omn*R_i*R_om
-      Rot = MATMUL(R_Omn,RiRom)
-          
-      !  write(*,*)'a,ecc=',aa,ecc
-      CALL keplereq(ell,ecc,u)
-      !  write(*,*)'u=',u,'u-e*sinu=',u-ecc*sin(u)
-      cosu = cos(u); sinu = sin(u)
-       
+      Rot = matmul(R_Omn,RiRom)
+      ! Solve the Kepler equation 
+      call keplereq(ell,ecc,u)
+      cosu = cos(u)
+      sinu = sin(u)
+      ! Compute the position in the orbital plane  
       pos(1,1) = aa*(cosu - ecc)
       pos(2,1) = aa*sqrt(1.d0-ecc**2)*sinu 
       pos(3,1) = 0.d0 
-
+      ! Derivative of the position w.r.t u
       dposdu(1,1) = L**2/kappa2*(-sinu)
       dposdu(2,1) = L*G*cosu/kappa2
       dposdu(3,1) = 0.d0
-      
-      norma=sqrt(DOT_PRODUCT(dposdu(1:3,1),dposdu(1:3,1)))
-      versvel(1:3,1)=dposdu(1:3,1)/norma
-      normpos=sqrt(DOT_PRODUCT(pos(1:3,1),pos(1:3,1)))
-      normvel =kappa*sqrt(2.d0/normpos-1.d0/aa) 
-      vel(1:3,1)=normvel*versvel(1:3,1)
-      
-      tmpcar(1:3,1) =MATMUL(Rot,pos(1:3,1))
-      tmpcar(4:6,1) =MATMUL(Rot,vel(1:3,1))    
+      ! Compute the direction of the velocity 
+      norma          = sqrt(dot_product(dposdu(1:3,1),dposdu(1:3,1)))
+      versvel(1:3,1) = dposdu(1:3,1)/norma
+      ! Copmute the norm of the velocity
+      normpos        = sqrt(dot_product(pos(1:3,1),pos(1:3,1)))
+      normvel        = kappa*sqrt(2.d0/normpos-1.d0/aa) 
+      ! Assign the velocity
+      vel(1:3,1)     = normvel*versvel(1:3,1)
+      ! Assign the cartesian elements 
+      tmpcar(1:3,1)  = matmul(Rot,pos(1:3,1))
+      tmpcar(4:6,1)  = matmul(Rot,vel(1:3,1))    
+      ! Put them in the output variable
       car(1:6) = tmpcar(1:6,1)
    end subroutine kep2car
 
