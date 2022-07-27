@@ -1,5 +1,5 @@
 ! ################################################################
-! #      Authors: Marco Fenucci, Bojan Novaković, Dušan Marceta  #
+! #     Authors: Marco Fenucci, Bojan Novaković, Dušan Marceta   #
 ! # Institution: University of Belgrade                          #
 ! #        Date: July 2022                                       #
 ! ################################################################
@@ -134,7 +134,7 @@ program gamma_est_mc
    endif
    ! Generate the random numbers all at the beginning. This is done because 
    ! the intrinsic function random_number() does not work properly with
-   ! multiple threads
+   ! OpenMP multiple threads 
    do iter=1, max_iter
       if(method.eq.1.or. method.eq.2)then
          call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll)

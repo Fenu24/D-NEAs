@@ -1,5 +1,5 @@
 ! ################################################################
-! #      Authors: Marco Fenucci, Bojan Novaković, Dušan Marceta  #
+! #     Authors: Marco Fenucci, Bojan Novaković, Dušan Marceta   #
 ! # Institution: University of Belgrade                          #
 ! #        Date: July 2022                                       #
 ! ################################################################
