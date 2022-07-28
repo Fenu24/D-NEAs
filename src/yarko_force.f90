@@ -14,12 +14,31 @@ module yarko_force
    ! Public subroutines
    public :: computeYarko_circular,   computeYarkoMaxMin_circular, &
            & yarko_eccentric,         yarkovsky_vf, &
-           & yarko_eccentric_2l,      yarkovsky_vf_2l
+           & yarko_eccentric_2l,      yarkovsky_vf_2l, &
+           & compute_depths
    contains
    
    !============================================
    !====== FORMULAS BY VOKROUHLICKY 1999 =======
    !============================================
+
+   subroutine compute_depths(R, rho, K, C, sma, P, ls, ld)
+      real(kind=dkind), intent(in)  :: R, rho, K, C, sma, P
+      real(kind=dkind), intent(out) :: ls, ld
+      ! end interface
+      real(kind=dkind) :: mAst, mu
+      real(kind=dkind) :: omega_rev, omega_rot 
+      ! Compute mass of the asteroid
+      mAst = 4.d0*pi*rho*R**3.d0/3.d0
+      ! Compute omega_rev 
+      mu = gmsun+uGc*mAst
+      ! Compute the mean motion and the rotation frequency
+      omega_rev = sqrt(mu/(sma*au2m)**3.d0)
+      omega_rot = twopi/(P*h2s)
+      ! Compute penetration depths
+      ls = sqrt(K/(rho*C*omega_rev))
+      ld = ls*sqrt(omega_rev/omega_rot)
+   end subroutine
  
    ! PURPOSE:
    !         

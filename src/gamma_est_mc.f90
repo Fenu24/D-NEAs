@@ -9,7 +9,7 @@
 program gamma_est_mc
    use iso_fortran_env, only: output_unit
    use used_const
-   use yarko_force,     only: yarko_eccentric
+   use yarko_force,     only: compute_depths
    implicit none
    ! Interfaces for the subroutines with optional arguments
    interface
@@ -62,6 +62,7 @@ program gamma_est_mc
    ! Vector containing the solutions of the modeled vs. measured Yarkovsky drift
    real(kind=dkind) :: Kcross(6)
    integer          :: nCross
+   real(kind=dkind) :: ls, ld
    ! Variable to store the thermal inertia
    real(kind=dkind) :: thermalInertia 
    ! Output filename
@@ -78,10 +79,10 @@ program gamma_est_mc
    character(len=*), parameter :: screen_fmt_i = '(a32, i9)'
    character(len=*), parameter :: screen_fmt_s = '(a32)'
    character(len=*), parameter :: screen_fmt_f = '(a32, a50)'
-   character(len=*), parameter ::    out_fmt1  = '(5(e20.14, 2x))'
-   character(len=*), parameter ::    out_fmt2  = '(6(e20.14, 2x))'
+   character(len=*), parameter ::    out_fmt1  = '(7(e20.14, 2x))'
+   character(len=*), parameter ::    out_fmt2  = '(8(e20.14, 2x))'
    integer                     :: ierr
-   logical                     :: is_present
+   logical                     :: is_present, skip_iter
    ! Read input data
    call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo, n_proc)
    ! Read the distributions of diameter, density and obliquity, depending on the method used
@@ -125,12 +126,15 @@ program gamma_est_mc
    ! Initialize the seed for the generation of random numbers
    call init_random_seed()
    ! Open the output file
-   open(unit=10, file='output/'//filename(1:len_trim(filename))//'.txt',action='write')    
+   open(unit=10,  file='output/'//filename(1:len_trim(filename))//'.txt', action='write')    
+   open(unit=100, file='output/'//filename(1:len_trim(filename))//'.warn',action='write')    
    ! Check if the done file is present. If it is, delete it
    inquire(file='output/'//filename(1:len_trim(filename))//'.done', exist=is_present)
    if(is_present)then
       open(unit=11, file='output/'//filename(1:len_trim(filename))//'.done', status="old", iostat=ierr)
-      if(ierr == 0)close (11,status="delete")
+      if(ierr == 0)then
+         close(11,status="delete")
+      endif
    endif
    ! Generate the random numbers all at the beginning. This is done because 
    ! the intrinsic function random_number() does not work properly with
@@ -184,11 +188,10 @@ program gamma_est_mc
       gam        = gamma_mc(jj) 
       rotPer     = period_mc(ll)
       levelCurve = dadt_mc(ii)
-      ! If for some reason the rotation period is negative, 
-      ! just skip the iteration
-      if(rotPer.lt.0.d0)then
-         ! TODO: Do we want to put these occurrences in a file?
-         !       Like a .log file
+      ! Check if for some reason there are errors in the input
+      ! parameters
+      call check_params(radius, rho, gam, rotPer, 100, skip_iter)
+      if(skip_iter)then
          cycle
       endif
       ! Invert the modeled vs. observed Yarkovsky drift equation
@@ -212,11 +215,17 @@ program gamma_est_mc
          !$OMP CRITICAL
          do zz = 1, nCross
             if(method.eq.1 .or. method.eq.2)then
+               ! Compute thermal inertia
                thermalInertia = sqrt(rho*KCross(zz)*C)
-               write(10, out_fmt1)  KCross(zz), thermalInertia, rho, 2.d0*radius, gam
+               ! Compute the thermal depths
+               call compute_depths(radius, rho, Kcross(zz), C, semiaxm, rotPer, ls, ld)
+               write(10, out_fmt1)  KCross(zz), thermalInertia, rho, 2.d0*radius, gam, ls, ld
             elseif(method.eq.3)then
+               ! Compute thermal inertia
                thermalInertia = sqrt(rho_surf*KCross(zz)*C)
-               write(10, out_fmt2)  KCross(zz), thermalInertia, rho, rho_surf, 2.d0*radius, gam
+               ! Compute the thermal depths
+               call compute_depths(radius, rho_surf, Kcross(zz), C, semiaxm, rotPer, ls, ld)
+               write(10, out_fmt2)  KCross(zz), thermalInertia, rho, rho_surf, 2.d0*radius, gam, ls, ld
             endif
          enddo
          !$OMP END CRITICAL
@@ -227,6 +236,7 @@ program gamma_est_mc
    write(output_unit,*)
    write(output_unit,*) "Done"
    close(10)
+   close(100)
    deallocate(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc)
    ! Create the .done file
    open(unit=11, file='output/'//filename(1:len_trim(filename))//'.done', action='write')
@@ -280,23 +290,53 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    close(1)
    ! Check for errors in the input file
    if(C.lt.0.d0)then
-      write(*,*) "ERROR. Heat capacity must be positive. Selected: ", C
+      write(*,*) "ERROR. Heat capacity must be positive." 
+      write(*,*) " Selected C: ", C
       write(*,*) " STOPPING PROGRAM"
       stop
-   elseif(thermalCondMin.lt.0.d0 .or. thermalCondMax.lt.thermalCondMin)then
-      write(*,*) "ERROR. The thermal conductivity interval must be positive."
+   elseif(thermalCondMin.lt.0.d0 .or. thermalCondMax.lt.0.d0)then
+      write(*,*) "ERROR. The thermal conductivity must be positive."
+      write(*,*) " Selected Kmin, Kmax: ", thermalCondMin, thermalCondMax
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(thermalCondMax.lt.thermalCondMin)then
+      write(*,*) "ERROR. Kmax must be larger than Kmin. " 
+      write(*,*) " Selected Kmin, Kmax: ", thermalCondMin, thermalCondMax
       write(*,*) " STOPPING PROGRAM"
       stop
    elseif(max_iter.le.0)then
       write(*,*) "ERROR. max_iter must be positive."
+      write(*,*) " Selected max_iter: ", max_iter
       write(*,*) " STOPPING PROGRAM"
       stop
    elseif(n_proc.lt.1)then
-      write(*,*) "ERROR. Number of processors must be at least 1. Selected: ", n_proc
+      write(*,*) "ERROR. Number of processors must be at least 1. "
+      write(*,*) " Selected n_proc: ", n_proc
       write(*,*) " STOPPING PROGRAM"
       stop
    elseif(method.lt.1 .or. method.gt.3)then
-      write(*,*) " ERROR: method can only be 1, 2 or 3. Selected: ", method
+      write(*,*) "ERROR: method can only be 1, 2 or 3. "
+      write(*,*) " Selected method: ", method
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(absCoeff.le.0.d0)then
+      write(*,*) "ERROR: Absorption coefficient must be positive. "
+      write(*,*) " Selected: ", absCoeff 
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(emissiv.lt.0.d0 .or. emissiv.gt.1.d0)then
+      write(*,*) "ERROR: Emissivity must be between 0 and 1."
+      write(*,*) " Selected: ", emissiv 
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(semiaxm.lt.0.d0)then
+      write(*,*) "ERROR: Semi-major axis must be positive."
+      write(*,*) " Selected: ", semiaxm
+      write(*,*) " STOPPING PROGRAM"
+      stop
+   elseif(ecc.lt.0.d0 .or. ecc.ge.1.d0)then
+      write(*,*) "ERROR: Eccentricity must be between 0 and 1."
+      write(*,*) " Selected: ", ecc
       write(*,*) " STOPPING PROGRAM"
       stop
    endif
@@ -479,6 +519,42 @@ subroutine progress_bar(iter, max_iter)
    flush(output_unit)
 end 
 
+! PURPOSE: Check if the parameters used are all admissible. If not, give a flag in output to skip the iteration,
+!          and write an error/warning on an output file
+!
+! INPUT:
+!
+! OUTPUT:
+subroutine check_params(radius, rho, gam, rotPer, iun, skip_iter)
+   use used_const
+   implicit none
+   real(kind=dkind), intent(in)  :: radius
+   real(kind=dkind), intent(in)  :: rho
+   real(kind=dkind), intent(in)  :: gam 
+   real(kind=dkind), intent(in)  :: rotPer
+   integer,          intent(in)  :: iun
+   logical,          intent(out) :: skip_iter
+   ! end interface
+   skip_iter = .false.
+   if(radius.le.0.d0)then
+      skip_iter = .true.
+      write(iun, *) "WARNING: Negative radius: ", radius
+      write(iun, *) "Skip Iteration"
+   elseif(rho.le.0.d0)then
+      skip_iter = .true.
+      write(iun, *) "WARNING: Negative density: ", rho
+      write(iun, *) "Skip Iteration"
+   elseif(rotPer.le.0.d0)then
+      skip_iter = .true.
+      write(iun, *) "WARNING: Negative rotation period: ", rotPer
+      write(iun, *) "Skip Iteration"
+   elseif(gam.lt.0.d0 .or. gam.gt.180.d0)then
+      skip_iter = .true.
+      write(iun, *) "WARNING: Obliquity out of bound: ", gam
+      write(iun, *) "Skip Iteration"
+   endif
+end subroutine
+
 !========================================================
 !=========== INVERSION OF YARKOVSKY DRIFT ===============
 !========================================================
@@ -627,12 +703,13 @@ subroutine bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, &
    integer                     :: n
    integer,          parameter :: nmax = 100 
    real(kind=dkind), parameter :: tol  = 1e-11
-   ! set an absurde value for KCross
+   ! Set an absurdely large value for KCross
    KCross = 1d9
    ! Initialize the points
    K1 = Ka
    K2 = Kb
    ! F = yarko-levelCurve
+   ! Evaluate F(K1)
    if(method.eq.1)then
      call computeYarko_circular(rho, K1, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
@@ -641,6 +718,7 @@ subroutine bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, &
      call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K1, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
    endif
    FK1 = yarko-levelCurve
+   ! Evaluate F(K2)
    if(method.eq.1)then
       call computeYarko_circular(rho, K2, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
    elseif(method.eq.2)then
@@ -649,7 +727,9 @@ subroutine bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, &
       call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, K2, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
    endif
    FK2 = yarko-levelCurve
+   ! Start the bisection method
    do n=1, nmax
+      ! Evaluate F(Kmean)
       Kmean = (K1+K2)/2.d0
       if(method.eq.1)then
          call computeYarko_circular(rho, Kmean, C, radius, semiaxm, gam, rotPer, alpha, epsi, yarko)
@@ -659,17 +739,19 @@ subroutine bisectionMethod(rho, rho_surf, C, radius, semiaxm, ecc, gam, &
          call yarko_eccentric_2l(semiaxm, ecc, rho, rho_surf, Kmean, C, radius, gam, rotPer, alpha, epsi, expo, yarko)
       endif
       FKmean = yarko-levelCurve
+      ! Check the convergence
       if((K2-K1)/2.d0 .lt. tol)then
          KCross = Kmean
          exit
       endif
-
+      ! Otherwhise take the new interval
       if(FK1*FKmean.gt.0.d0)then
          K1 = Kmean
       else
          K2 = Kmean
       endif
    enddo
+   ! Check if the method did not converge
    if(n.eq.nmax)then
       write(*,*) "ERROR. Bisection method failed!!"
       write(*,*) " STOPPING PROGRAM."
