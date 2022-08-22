@@ -14,7 +14,7 @@ This software was developed for the D-NEAs project, that was awarded with the [P
 
 The executable for the thermal inertia estimation is called
 
-   gamma_est_mc.x 
+            gamma_est_mc.x 
 
 and mathematical details of the model can be found in the paper WWW.
 
@@ -49,10 +49,37 @@ please follow these steps
 
 ## Thermal inertia estimation 
 
-### Generating parameters distributions
+### Generation of the parameter distributions 
 Write this part once the Python code is ready
 
-### Running the thermal inertia estimation
+### Configuration file for the main program
+
+The program gamma_est_mc.x also needs a configuration file called *gamma_est_mc.nml*, to be placed in the folder *input*. 
+In this file the user must provide:
+
+- **C**: the value of the heat capacity C (in J/kg/K).
+- **thermalCondMin**, **thermalCondMax**:the minimum and maximum values of thermal conductivity K (in W/m/K) in which solutions of the measured vs. predicted Yarkovsky drift equations are searched for.
+- **semiaxm**: the semi-major axis of the asteroid orbit (in au).
+- **ecc**: the eccentricity of the asteroid orbit.
+- **absCoeff**: the absorption coefficient of the asteroid.
+- **emissiv**: the emissivity of the asteroid.
+- **method**: the model used for the prediction of the Yarkovsky drift. Currently available options are:
+   1. Analytical circular model - single layer;
+   2. Semi-analytical eccentric model - single layer;
+   3. Semi-analytical eccentric model - double layer.
+- **filename**: the name to give to the output files.
+- **max_iter**: the maximum number of iterations of the Monte Carlo method.
+- **expo**: the exponent for the thermal inertia variation along the orbit. Note that if this flag is assigned the value 0.d0, then a constant thermal inertia is used.
+- **n_proc**: number of processors used for the Monte Carlo method.
+
+The input file will look like the following figure
+<figure>
+<p style="text-align:center;">
+<img src=".img/input_params.png" width="80%" height="80%">
+</p>
+</figure>
+
+### Running the thermal inertia estimation 
 
 ### Output files
 
