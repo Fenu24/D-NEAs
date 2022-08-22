@@ -64,9 +64,9 @@ In this file the user must provide:
 - **absCoeff**: the absorption coefficient of the asteroid.
 - **emissiv**: the emissivity of the asteroid.
 - **method**: the model used for the prediction of the Yarkovsky drift. Currently available options are:
-   1. Analytical circular model - single layer;
-   2. Semi-analytical eccentric model - single layer;
-   3. Semi-analytical eccentric model - double layer.
+   * 1: Analytical circular model - single layer;
+   * 2: Semi-analytical eccentric model - single layer;
+   * 3: Semi-analytical eccentric model - double layer.
 - **filename**: the name to give to the output files.
 - **max_iter**: the maximum number of iterations of the Monte Carlo method.
 - **expo**: the exponent for the thermal inertia variation along the orbit. Note that if this flag is assigned the value 0.d0, then a constant thermal inertia is used.
