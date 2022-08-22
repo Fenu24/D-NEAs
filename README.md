@@ -21,7 +21,7 @@ and mathematical details of the model can be found in the paper WWW.
 
 ## Compilation
 
-The code is structured by means of the following folders:
+The code is structured into the following folders:
 -    **src**: contains the source codes
 -    **bin**: contains the binary files of the executables
 -  **input**: contains the input files of the executables
@@ -97,7 +97,7 @@ progress-bar only when 1 CPU is used for the simulation.
 
 Once the simulation is finished, three output files will be produced and placed in the *output* folder:
 
-**<filename>.txt**: this is the general output file.
+**\<filename\>.txt**: this is the general output file.
 
 **<filename>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
 
