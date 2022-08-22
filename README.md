@@ -89,19 +89,19 @@ from the main directory. The program will print on the screen a summary of the o
 progress-bar only when 1 CPU is used for the simulation. 
 <figure>
 <p style="text-align:center;">
-<img src=".img/output_screen.png" width="80%" height="80%">
+<img src=".img/output_screen.png" width="70%" height="70%">
 </p>
 </figure>
 
 ### Output files
 
-Once the simulation is finished, three output files will be produced and placed in the *output* folder:
+The program creates three output files will be produced and placed in the *output* folder:
 
 **\<filename\>.txt**: this is the general output file.
 
-**<filename>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
+**\<filename\>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
 
-**<filename>.done**: this file is created when the job has ended correctly. It is useful to monitor the end which jobs have ended when multiple 
+**\<filename\>.done**: this file is created when the job has ended correctly. It is useful to monitor the end which jobs have ended when multiple 
 processes are launched simultaneously. 
 
 
