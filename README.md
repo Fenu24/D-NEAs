@@ -1,13 +1,16 @@
 # Manual for the D-NEAs software
 
-## Authors 
-- [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<marco_fenucci@matf.bg.ac.rs>) 
-- [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
-- [Dušan Marčeta](http://poincare.matf.bg.ac.rs/~dmarceta/), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<dmarceta@matf.bg.ac.rs>) 
+## Table of contents
+
+* [Introduction](#introduction)
+* [Compilation](#compilation)
+* [Thermal inertia estimation](#thermal-inertia-estimation)
+* [License and authors](#license-and-authors)
+* [References](#references)
 
 ## Introduction
 
-## Compiling the code
+## Compilation
 
 Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution
 comes with a configuration script and a Makefile that automatically does the job. To compile the source code, 
@@ -26,8 +29,18 @@ please follow these steps
 **NOTE 1.** For the compilation to work correctly, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two directories are correctly contained on your local distribution.
 
 
-## Generating input distributions
+## Thermal inertia estimation 
 
-## Running the thermal inertia estimation
+### Generating parameters distributions
+
+### Running the thermal inertia estimation
+
+## License and authors
+
+This software is released under the XXX license, and it developed and maintained by
+
+- [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<marco_fenucci@matf.bg.ac.rs>) 
+- [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
+- [Dušan Marčeta](http://poincare.matf.bg.ac.rs/~dmarceta/), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<dmarceta@matf.bg.ac.rs>) 
 
 ## References
