@@ -93,7 +93,7 @@ In this file the user must provide:
 - **filename**: the name to give to the output files.
 - **max_iter**: the maximum number of iterations of the Monte Carlo method.
 - **expo**: the exponent for the thermal inertia variation along the orbit. Note that if this flag is assigned the value 0.d0, then a constant thermal inertia is used.
-- **n_proc**: number of processors used for the Monte Carlo method. Parallelization is implemented by using the FORTRAN (OpenMP)[https://www.openmp.org/] API.
+- **n_proc**: number of processors used for the Monte Carlo method. Parallelization is implemented by using the FORTRAN [OpenMP](https://www.openmp.org/) API.
 
 The input file will look like the following figure
 <figure>
