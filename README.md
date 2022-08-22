@@ -12,7 +12,7 @@
 
 This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). This package contains a software for the thermal inertia estimation of near-Earth asteroids (NEAs), based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are published in the papers XXX, YYY, ZZZ.
 
-The executable for the thermal inertia estimation is called
+The software is written as a combination of FORTRAN, python, and bash scripting. The main executable for the thermal inertia estimation is called
 
             gamma_est_mc.x 
 
@@ -49,8 +49,27 @@ please follow these steps
 
 ## Thermal inertia estimation 
 
-### Generation of the parameter distributions 
-Write this part once the Python code is ready
+The program gamma_est_mc.x for the thermal inertia estimation has two kinds of input:
+
+1. files containing the distributions of physical parameters
+2. a configuration file containing the fixed physical parameters and the settings for the run
+
+In the next sections we explain how to produce the input files, how to run the code, and what are the output files of the code.
+
+### Distributions of physical parameters 
+
+Some parameters of the Yarkovsky model can be assumed to have a certain distribution. In our model, we assume that the measured Yarkovsky effect, 
+the bulk and the surface density, the diameter, the obliquity, and the rotation period may all be represented by a distribution.
+The program needs the following files, to be placed in the *input* folder:
+
+- **dadt_mc.txt**: contains the distribution of the measured Yarkovsky effect;
+- **rho_mc.txt**: contains the distribution of the bulk density of the asteroid;
+- **rho_surf_mc.txt**: contains the distribution of the surface density. This file is needed only when the two-layer Yarkovsky model is used;
+- **diam_mc.txt**: contains the distribution of the diameter of the asteroid;
+- **gamma_mc.txt**: contains the distribution of the obliquity of the asteroid;
+- **period_mc.txt**: contains the distribution of the rotation period of the asteroid.
+
+WRITE HOW TO GENERATE THE DISTRIBUTIONS WHEN THE PYTHON PART IS READY.
 
 ### Configuration file for the main program
 
@@ -70,7 +89,7 @@ In this file the user must provide:
 - **filename**: the name to give to the output files.
 - **max_iter**: the maximum number of iterations of the Monte Carlo method.
 - **expo**: the exponent for the thermal inertia variation along the orbit. Note that if this flag is assigned the value 0.d0, then a constant thermal inertia is used.
-- **n_proc**: number of processors used for the Monte Carlo method.
+- **n_proc**: number of processors used for the Monte Carlo method. Parallelization is implemented by using the FORTRAN (OpenMP)[https://www.openmp.org/] API.
 
 The input file will look like the following figure
 <figure>
@@ -97,15 +116,25 @@ progress-bar only when 1 CPU is used for the simulation.
 
 The program creates three output files will be produced and placed in the *output* folder:
 
-**\<filename\>.txt**: this is the general output file.
+**\<filename\>.txt**: this is the general output file, which is organized in columns. The first row of the file specifies what values are on each column. For the single layer model,
+the user will find:
+   1. the thermal conductivity (in W/m/K); 
+   2. the corresponding thermal inertia (in J m$^{-2}$ K$^{-1}$ s$^{-1/2}$);
+   3. the bulk density (in kg/m$^{3}$);
+   4. the diameter (in m);
+   5. the obliquity (in degrees);
+   6. the seasonal wave depth (in m);
+   7. the diurnal wave depth (in m).
+In the case the two-layer Yarkovsky model is used, the surface density is added in the fourth column, while the other values are shifted by one column to the right.
 
 **\<filename\>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
 
-**\<filename\>.done**: this file is created when the job has ended correctly. It is useful to monitor the end which jobs have ended when multiple 
+**\<filename\>.done**: this file is created when the job has ended correctly, and it is just empty. It is useful to monitor the end which jobs have ended when multiple 
 processes are launched simultaneously. 
 
-
 ### Thermal inertia estimation of a set of NEAs 
+
+## Running the test 
 
 ## License and authors
 
