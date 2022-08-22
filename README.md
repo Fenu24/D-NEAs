@@ -22,13 +22,13 @@ and mathematical details of the model can be found in the paper WWW.
 ## Compilation
 
 The code is structured by means of the following folders:
--    src: contains the source codes
--    bin: contains the binary files of the executables
--  input: contains the input files of the executables
-- output: contains the output files
-- matlab: contains scripts and functions to produce input and output
--   .mod: contains the .mod files needed at compilation time
--   .obj: contains the .o files needed at compilation time
+-    **src**: contains the source codes
+-    **bin**: contains the binary files of the executables
+-  **input**: contains the input files of the executables
+- **output**: contains the output files
+- **matlab**: contains scripts and functions to produce input and output
+-   **.mod**: contains the .mod files needed at compilation time
+-   **.obj**: contains the .o files needed at compilation time
 
 Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution
 comes with a configuration script and a Makefile that automatically does the job. To compile the source code, 
@@ -81,7 +81,29 @@ The input file will look like the following figure
 
 ### Running the thermal inertia estimation 
 
+Once all the input files are ready, you can run the Monte Carlo estimation of the thermal inertia by typing
+
+           ./gamma_est_mc.x
+
+from the main directory. The program will print on the screen a summary of the options used in input, and show a 
+progress-bar only when 1 CPU is used for the simulation. 
+<figure>
+<p style="text-align:center;">
+<img src=".img/output_screen.png" width="80%" height="80%">
+</p>
+</figure>
+
 ### Output files
+
+Once the simulation is finished, three output files will be produced and placed in the *output* folder:
+
+**<filename>.txt**: this is the general output file.
+
+**<filename>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
+
+**<filename>.done**: this file is created when the job has ended correctly. It is useful to monitor the end which jobs have ended when multiple 
+processes are launched simultaneously. 
+
 
 ### Thermal inertia estimation of a set of NEAs 
 

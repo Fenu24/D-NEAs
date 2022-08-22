@@ -6,7 +6,7 @@
             ecc = 0.52018002178656d0,
        absCoeff = 1.0d0,
         emissiv = 0.984d0,
-         method = 2,
+         method = 1,
       filename  = '2016GE1',
        max_iter = 1000000,
            expo = 0.d0,
