@@ -10,13 +10,17 @@
 
 ## Introduction
 
-This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). This package contains a software for the thermal inertia estimation of near-Earth asteroids (NEAs), based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are published in the papers XXX, YYY, ZZZ.
+This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
+This package contains a software implementing a method for the thermal inertia estimation of near-Earth asteroids (NEAs), 
+that based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are 
+published in the papers XXX, YYY, ZZZ.
 
-The software is written as a combination of FORTRAN, python, and bash scripting. The main executable for the thermal inertia estimation is called
+The software is written as a combination of FORTRAN, python, and bash scripting. The main executable for the thermal 
+inertia estimation is called
 
             gamma_est_mc.x 
 
-and mathematical details of the model can be found in the paper WWW.
+The user can find the mathematical details of the model in the paper WWW.
 
 
 ## Compilation
