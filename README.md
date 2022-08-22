@@ -48,7 +48,10 @@ please follow these steps
    and the executable binary files will be placed in the *bin* directory. Symbolic links will be created in the main directory.
 
 
-**NOTE 1.** For the compilation to work correctly, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two directories are correctly contained on your local distribution.
+**NOTE 1.** The code has been tested with the Intel ifort compiler v. 2021.3.0, and with the GNU gfortran compiler v. 9.4.0. Note that the -qopenmp flag is not available in the Intel ifort versions previous to the 2018.0.0, and therefore the compilation may not work. 
+**NOTE 2.** In our runs, we found that the code is significantly faster when compiled with the [Intel ifort compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html#gs.9x3c16) rather than with the GNU gfortran compiler. We suggest the user
+**NOTE 3.** For the compilation to work correctly, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two directories are correctly contained on your local distribution.
+to use the Intel ifort compiler, that is now freely available. 
 
 
 ## Thermal inertia estimation 
