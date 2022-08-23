@@ -106,11 +106,9 @@ In this file the user must provide:
 - **n_proc**: number of processors used for the Monte Carlo method. Parallelization is implemented by using the FORTRAN [OpenMP](https://www.openmp.org/) API.
 
 The input file will look like the following figure
-<figure>
-<p style="text-align:center;">
-<img src=".img/input_params.png" width="80%" height="80%">
+<p align="center">
+<img src=".img/input_params.png" width="60%" height="60%">
 </p>
-</figure>
 
 ### Running the thermal inertia estimation 
 
@@ -120,11 +118,9 @@ Once all the input files are ready, you can run the Monte Carlo estimation of th
 
 from the main directory. The program will print on the screen a summary of the options used in input, and show a 
 progress-bar only when 1 CPU is used for the simulation. 
-<figure>
-<p style="text-align:center;">
-<img src=".img/output_screen.png" width="70%" height="70%">
+<p align="center">
+<img src=".img/output_screen.png" width="60%" height="60%">
 </p>
-</figure>
 
 ### Output files
 
