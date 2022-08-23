@@ -1,2 +1,0 @@
-FC=ifort
-FFLAGS=-module .mod -warn nousage -O -mp1 -shared-intel -mcmodel=medium -assume byterecl -qopenmp
