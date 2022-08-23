@@ -9,7 +9,7 @@
 * [References](#references)
 
 ## Introduction
-![logo](.img/logo.png)
+![logo](.img/logo.png | width=60)
 This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
 This package contains a software implementing a method for the thermal inertia estimation of near-Earth asteroids (NEAs), 
 that based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are 
