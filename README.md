@@ -62,7 +62,6 @@ please follow these steps
 **NOTE 2.** In our runs, we found that the code is significantly faster when compiled with the [Intel ifort compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html#gs.9x3c16) rather than with the GNU gfortran compiler. We suggest the user to compile the code whit the Intel ifort compiler in order to obtain the best performances.
 
 **NOTE 3.** For the compilation to work correctly, you need two hidden directories called <tt>.mod</tt> and <tt>.obj</tt>. Please be sure that these two directories are correctly contained on your local distribution.
-to use the Intel ifort compiler, that is now freely available. 
 
 
 ## Thermal inertia estimation 
