@@ -4,7 +4,7 @@
 <img src=".img/logo.png" width="60%" height="60%">
 </p>
 
-## Table of contents
+**Table of contents**
 
 * [Introduction](#introduction)
 * [Compilation](#compilation)
