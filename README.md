@@ -6,7 +6,6 @@
 
 ## Table of contents
 
-* [Table of contents](#table-of-contents)
 * [Introduction](#introduction)
 * [Compilation](#compilation)
 * [Thermal inertia estimation](#thermal-inertia-estimation)
@@ -14,7 +13,6 @@
   + [Configuration file for the main program](#configuration-file-for-the-main-program)
   + [Running the thermal inertia estimation](#running-the-thermal-inertia-estimation)
   + [Output files](#output-files)
-  + [Thermal inertia estimation of a set of NEAs](#thermal-inertia-estimation-of-a-set-of-neas)
 * [Running the test](#running-the-test)
 * [License and authors](#license-and-authors)
 * [References](#references)
@@ -148,8 +146,6 @@ In the case the two-layer Yarkovsky model is used, the surface density is added 
 
 **\<filename\>.done**: this file is created when the job has ended correctly, and it is just empty. It is useful to monitor the end which jobs have ended when multiple 
 processes are launched simultaneously. 
-
-### Thermal inertia estimation of a set of NEAs 
 
 ## Running the test 
 
