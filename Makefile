@@ -37,6 +37,9 @@ links_ex:
 	ln -s bin/$(EXE1)
 	ln -s bin/gamma_est_mc_batches.sh
 
+test:
+	cp input/2011PT_test/* input/
+
 #########################################################
 # compilation of sources
 

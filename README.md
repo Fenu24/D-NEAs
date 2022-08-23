@@ -147,8 +147,29 @@ In the case the two-layer Yarkovsky model is used, the surface density is added 
 **\<filename\>.done**: this file is created when the job has ended correctly, and it is just empty. It is useful to monitor the end which jobs have ended when multiple 
 processes are launched simultaneously. 
 
-## Running the test 
+### Running the test 
 
+The distribution includes a test to reproduce some of the results about the super-fast rotator (499998) 2011 PT, 
+published in Fenucci et al. 2021. All the input files for (499998) 2011 PT can be found in the folder
+
+            input/2011PT_test
+
+To run the test, the user must first copy the content of this folder into the <tt>input</tt> folder. This can be done automatically
+from the main folder by typing
+
+            make test
+
+The test is set up to run with on 1 CPU with the analytical circular model. The thermal inertia estimation can be run by typing
+
+           ./gamma_est_mc.x
+
+Output files will be placed in the <tt>output</tt> folder with the prefix <tt>2011PT</tt>. The file <tt>2011PT.txt</tt> contains 
+the distribution of the thermal conductivity (first column), and of the thermal inertia (second column). By plotting the 
+histograms of log<sub>10</sub> of these values, the user should obtain something similar to the following distributions:
+<p align="center">
+<img src=".img/2011PT_test.png" width="60%" height="60%">
+</p>
+            
 ## License and authors
 
 The D-NEAs software is released under the XXX license, and it is developed and maintained by
