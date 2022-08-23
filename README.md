@@ -81,7 +81,7 @@ the bulk and the surface density, the diameter, the obliquity, and the rotation 
 The program needs the following files, to be placed in the <tt>input</tt> folder:
 
 - **dadt_mc.txt**: contains the distribution of the measured Yarkovsky effect (in au/My);
-- **rho_mc.txt**: contains the distribution of the bulk density of the asteroid (in kg/m<sup>3</sup>;
+- **rho_mc.txt**: contains the distribution of the bulk density of the asteroid (in kg/m<sup>3</sup>);
 - **rho_surf_mc.txt**: contains the distribution of the surface density. This file is needed only when the two-layer Yarkovsky model is used;
 - **diam_mc.txt**: contains the distribution of the diameter of the asteroid (in m);
 - **gamma_mc.txt**: contains the distribution of the obliquity of the asteroid (in deg);
