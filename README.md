@@ -6,19 +6,18 @@
 
 ## Table of contents
 
-- [Manual for the D-NEAs software](#manual-for-the-d-neas-software)
-  * [Table of contents](#table-of-contents)
-  * [Introduction](#introduction)
-  * [Compilation](#compilation)
-  * [Thermal inertia estimation](#thermal-inertia-estimation)
-    + [Distributions of physical parameters](#distributions-of-physical-parameters)
-    + [Configuration file for the main program](#configuration-file-for-the-main-program)
-    + [Running the thermal inertia estimation](#running-the-thermal-inertia-estimation)
-    + [Output files](#output-files)
-    + [Thermal inertia estimation of a set of NEAs](#thermal-inertia-estimation-of-a-set-of-neas)
-  * [Running the test](#running-the-test)
-  * [License and authors](#license-and-authors)
-  * [References](#references)
+* [Table of contents](#table-of-contents)
+* [Introduction](#introduction)
+* [Compilation](#compilation)
+* [Thermal inertia estimation](#thermal-inertia-estimation)
+  + [Distributions of physical parameters](#distributions-of-physical-parameters)
+  + [Configuration file for the main program](#configuration-file-for-the-main-program)
+  + [Running the thermal inertia estimation](#running-the-thermal-inertia-estimation)
+  + [Output files](#output-files)
+  + [Thermal inertia estimation of a set of NEAs](#thermal-inertia-estimation-of-a-set-of-neas)
+* [Running the test](#running-the-test)
+* [License and authors](#license-and-authors)
+* [References](#references)
 
 ## Introduction
 
