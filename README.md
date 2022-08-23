@@ -6,12 +6,19 @@
 
 ## Table of contents
 
-* [Introduction](#introduction)
-* [Compilation](#compilation)
-* [Thermal inertia estimation](#thermal-inertia-estimation)
-* [License and authors](#license-and-authors)
-* [Running the test](#running-the-test)
-* [References](#references)
+- [Manual for the D-NEAs software](#manual-for-the-d-neas-software)
+  * [Table of contents](#table-of-contents)
+  * [Introduction](#introduction)
+  * [Compilation](#compilation)
+  * [Thermal inertia estimation](#thermal-inertia-estimation)
+    + [Distributions of physical parameters](#distributions-of-physical-parameters)
+    + [Configuration file for the main program](#configuration-file-for-the-main-program)
+    + [Running the thermal inertia estimation](#running-the-thermal-inertia-estimation)
+    + [Output files](#output-files)
+    + [Thermal inertia estimation of a set of NEAs](#thermal-inertia-estimation-of-a-set-of-neas)
+  * [Running the test](#running-the-test)
+  * [License and authors](#license-and-authors)
+  * [References](#references)
 
 ## Introduction
 
@@ -105,7 +112,7 @@ In this file the user must provide:
 - **expo**: the exponent for the thermal inertia variation along the orbit. Note that if this flag is assigned the value 0.d0, then a constant thermal inertia is used.
 - **n_proc**: number of processors used for the Monte Carlo method. Parallelization is implemented by using the FORTRAN [OpenMP](https://www.openmp.org/) API.
 
-The input file will look like the following figure
+The input file will look like in the following figure
 <p align="center">
 <img src=".img/input_params.png" width="60%" height="60%">
 </p>
