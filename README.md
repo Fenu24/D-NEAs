@@ -10,6 +10,7 @@
 * [Compilation](#compilation)
 * [Thermal inertia estimation](#thermal-inertia-estimation)
 * [License and authors](#license-and-authors)
+* [Running the test](#running-the-test)
 * [References](#references)
 
 ## Introduction
@@ -49,20 +50,20 @@ please follow these steps
 
             make
 
-   and the executable binary files will be placed in the *bin* directory. Symbolic links will be created in the main directory.
+   and the executable binary files will be placed in the <tt>bin</tt> directory. Symbolic links will be created in the main directory.
 
 
-**NOTE 1.** The code has been tested with the Intel ifort compiler v. 2021.3.0, and with the GNU gfortran compiler v. 9.4.0. Note that the -qopenmp flag is not available in the Intel ifort versions previous to the 2018.0.0, and therefore the compilation may not work. 
+**NOTE 1.** The code has been tested with the <tt>Intel ifort compiler v. 2021.3.0</tt>, and with the <tt>GNU gfortran compiler v. 9.4.0</tt>. Note that the <tt>-qopenmp</tt> flag is not available in the Intel ifort versions previous to the 2018.0.0, and therefore the compilation may not work. 
 
 **NOTE 2.** In our runs, we found that the code is significantly faster when compiled with the [Intel ifort compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html#gs.9x3c16) rather than with the GNU gfortran compiler. We suggest the user to compile the code whit the Intel ifort compiler in order to obtain the best performances.
 
-**NOTE 3.** For the compilation to work correctly, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two directories are correctly contained on your local distribution.
+**NOTE 3.** For the compilation to work correctly, you need two hidden directories called <tt>.mod</tt> and <tt>.obj</tt>. Please be sure that these two directories are correctly contained on your local distribution.
 to use the Intel ifort compiler, that is now freely available. 
 
 
 ## Thermal inertia estimation 
 
-The program gamma_est_mc.x for the thermal inertia estimation has two kinds of input:
+The program <tt>gamma_est_mc.x</tt> for the thermal inertia estimation has two kinds of input:
 
 1. files containing the distributions of physical parameters
 2. a configuration file containing the fixed physical parameters and the settings for the run
@@ -73,20 +74,20 @@ In the next sections we explain how to produce the input files, how to run the c
 
 Some parameters of the Yarkovsky model can be assumed to have a certain distribution. In our model, we assume that the measured Yarkovsky effect, 
 the bulk and the surface density, the diameter, the obliquity, and the rotation period may all be represented by a distribution.
-The program needs the following files, to be placed in the *input* folder:
+The program needs the following files, to be placed in the <tt>input</tt> folder:
 
-- **dadt_mc.txt**: contains the distribution of the measured Yarkovsky effect;
-- **rho_mc.txt**: contains the distribution of the bulk density of the asteroid;
+- **dadt_mc.txt**: contains the distribution of the measured Yarkovsky effect (in au/My);
+- **rho_mc.txt**: contains the distribution of the bulk density of the asteroid (in kg/m<sup>3</sup>;
 - **rho_surf_mc.txt**: contains the distribution of the surface density. This file is needed only when the two-layer Yarkovsky model is used;
-- **diam_mc.txt**: contains the distribution of the diameter of the asteroid;
-- **gamma_mc.txt**: contains the distribution of the obliquity of the asteroid;
-- **period_mc.txt**: contains the distribution of the rotation period of the asteroid.
+- **diam_mc.txt**: contains the distribution of the diameter of the asteroid (in m);
+- **gamma_mc.txt**: contains the distribution of the obliquity of the asteroid (in deg);
+- **period_mc.txt**: contains the distribution of the rotation period of the asteroid (in hours).
 
 WRITE HOW TO GENERATE THE DISTRIBUTIONS WHEN THE PYTHON PART IS READY.
 
 ### Configuration file for the main program
 
-The program gamma_est_mc.x also needs a configuration file called *gamma_est_mc.nml*, to be placed in the folder *input*. 
+The program <tt>gamma_est_mc.x</tt> also needs a configuration file called <tt>gamma_est_mc.nml</tt>, to be placed in the folder <tt>input</tt>. 
 In this file the user must provide:
 
 - **C**: the value of the heat capacity C (in J/kg/K).
@@ -127,17 +128,18 @@ progress-bar only when 1 CPU is used for the simulation.
 
 ### Output files
 
-The program creates three output files will be produced and placed in the *output* folder:
+The program creates three output files will be produced and placed in the <tt>output</tt> folder:
 
 **\<filename\>.txt**: this is the general output file, which is organized in columns. The first row of the file specifies what values are on each column. For the single layer model,
 the user will find:
    1. the thermal conductivity (in W/m/K); 
-   2. the corresponding thermal inertia (in J m$^{-2}$ K$^{-1}$ s$^{-1/2}$);
-   3. the bulk density (in kg/m$^{3}$);
+   2. the corresponding thermal inertia (in J m<sup>-2</sup> K<sup>-1</sup> s<sup>-1/2</sup>);
+   3. the bulk density (in kg/m<sup>3</sup>);
    4. the diameter (in m);
-   5. the obliquity (in degrees);
+   5. the obliquity (in deg);
    6. the seasonal wave depth (in m);
    7. the diurnal wave depth (in m).
+
 In the case the two-layer Yarkovsky model is used, the surface density is added in the fourth column, while the other values are shifted by one column to the right.
 
 **\<filename\>.warn**: this file contains errors and warning messages encountered during the execution of the code. 
