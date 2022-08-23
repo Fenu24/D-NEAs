@@ -159,7 +159,7 @@ from the main folder by typing
 
             make test
 
-The test is set up to run with on 1 CPU with the analytical circular model. The thermal inertia estimation can be run by typing
+The test is set up to run on 1 CPU with the analytical circular model. The thermal inertia estimation can be run by typing
 
            ./gamma_est_mc.x
 
