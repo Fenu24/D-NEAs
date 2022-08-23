@@ -167,7 +167,7 @@ Output files will be placed in the <tt>output</tt> folder with the prefix <tt>20
 the distribution of the thermal conductivity (first column), and of the thermal inertia (second column). By plotting the 
 histograms of log<sub>10</sub> of these values, the user should obtain something similar to the following distributions:
 <p align="center">
-<img src=".img/2011PT_test.png" width="60%" height="60%">
+<img src=".img/2011PT_test.png" width="100%" height="100%">
 </p>
             
 ## License and authors
