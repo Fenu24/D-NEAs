@@ -31,7 +31,7 @@ The user can find the mathematical details of the model in the paper WWW.
 
 The code is structured into the following folders:
 -    **src**: contains the source codes
--    **bin**: contains the binary files of the executables
+-    **bin**: contains the binary files of the executables and scripts
 -  **input**: contains the input files of the executables
 - **output**: contains the output files
 - **matlab**: contains scripts and functions to produce input and output
@@ -39,9 +39,9 @@ The code is structured into the following folders:
 -   **.obj**: contains the .o files needed at compilation time
 
 Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution
-comes with a configuration script and a Makefile that automatically does the job. To compile the source code, 
+comes with a configuration script and a Makefile that automatically do the job. To compile the source code, 
 please follow these steps
-1. Choose the compiler and the compilation options by running the config.sh script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: GNU gfortran, and Intel ifort. An additional option defines the compilation flags, and the final user can select the optimization flags "-O". For instance, if you want to use the GNU gfortran compiler, you can run the script as
+1. Choose the compiler and the compilation options by running the <tt>config.sh</tt> script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: GNU gfortran, and Intel ifort. An additional option defines the compilation flags, and the final user can select the optimization flags "-O". For instance, if you want to use the GNU gfortran compiler, you can run the script as
            
            ./config.sh -O gfortran
             
