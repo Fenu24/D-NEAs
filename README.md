@@ -13,7 +13,7 @@
   + [Configuration file for the main program](#configuration-file-for-the-main-program)
   + [Running the thermal inertia estimation](#running-the-thermal-inertia-estimation)
   + [Output files](#output-files)
-* [Running the test](#running-the-test)
+  + [Running the test](#running-the-test)
 * [License and authors](#license-and-authors)
 * [References](#references)
 
