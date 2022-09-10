@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage () {
-   echo "Usage: config [options] <configuration>"
+   echo "Usage: config.sh [options] <configuration>"
    echo "       where one of the following options must be selected: "
    echo "          -d  (debug)"
    echo "          -O  (optimized)"
@@ -35,7 +35,7 @@ fi
 conf=$1
 
 # Remove configuration files
-rm make.flags
+rm make.flags 2>> /dev/null
 
 # Create new configuration files
 touch make.flags
