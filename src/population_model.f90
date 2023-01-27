@@ -235,16 +235,33 @@ module population_model
    ! OUTPUT:
    !   gam : obliquity [deg]
    ! TODO: I have to fix this
+   ! The cdf for cos gamma is
+   !
+   ! f = a y^3/3 + b y^2/2 + cy +a/3 - b/2 +c
    subroutine gen_obliquity(gam)
       real(kind=dkind), intent(out) :: gam
       ! end interface
-      real(kind=dkind) :: x
+      real(kind=dkind), parameter :: a = 1.12d0
+      real(kind=dkind), parameter :: b = -0.32d0
+      real(kind=dkind), parameter :: c = 0.13d0
+      real(kind=dkind)   :: f, fp, cosg, cosgp
+      real(kind=dkind)   :: x
+      integer            :: j
+      integer, parameter :: maxit = 100
       call random_number(x)
-      if(x.le.0.50)then
-         gam = 0.d0
-      else
-         gam = 180.d0
-      endif
+      cosg = -1.d0
+      do j=1, maxit
+         ! f  = a y^3/3 + b y^2/2 + cy +a/3 - b/2 +c
+         ! f' = a y^2 + b y + c 
+         f     = a*cosg**3/3.d0 + b*cosg**2/2.d0 + c*cosg + a/3.d0 - b/2.d0 + c - x 
+         fp    = a*cosg**2 + b*cosg + c
+         cosgp = cosg - f/fp
+         if(abs(cosg-cosgp).lt.1.d-14)then
+            exit
+         endif
+         cosg = cosgp
+      enddo
+      gam = acos(cosgp)*rad2deg
    end subroutine
 
    !TODO: gen_alpha

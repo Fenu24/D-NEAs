@@ -46,7 +46,7 @@ program gen_distrib
    integer, parameter :: unit_alpha = 107
    ! Loop variables
    integer            :: iter, max_iter
-   max_iter = 10000
+   max_iter = 100000
 
    ! Initialize seed for random number generator
    call init_random_seed()
