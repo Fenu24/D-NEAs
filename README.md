@@ -118,7 +118,7 @@ The input file will look like in the following figure
 <img src=".img/input_params.png" width="60%" height="60%">
 </p>
 
-### Running the thermal inertia estimation 
+#### Running the thermal inertia estimation 
 
 Once all the input files are ready, you can run the Monte Carlo estimation of the thermal inertia by typing
 
@@ -130,7 +130,7 @@ progress-bar only when 1 CPU is used for the simulation.
 <img src=".img/output_screen.png" width="60%" height="60%">
 </p>
 
-### Output files
+#### Output files
 
 The program creates three output files will be produced and placed in the <tt>output</tt> folder:
 
