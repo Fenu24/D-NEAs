@@ -30,7 +30,9 @@ program gen_distrib
    ! Yarkovsky drift  [au My^-1]
    real(kind=dkind) :: mean_dadt, std_dadt 
    ! Absorption coefficient
-   real(kind=dkind) :: alpha  
+   real(kind=dkind) :: alpha, aa, bond_albedo
+   ! Phase integral, use G = 0.15
+   real(kind=dkind), parameter :: qq = 0.29d0 + 0.685d0*0.15d0
    ! Probabilites for source routes
    real(kind=dkind) :: proute(7)
    ! 
@@ -46,14 +48,12 @@ program gen_distrib
    integer, parameter :: unit_alpha = 107
    ! Loop variables
    integer            :: iter, max_iter
-   max_iter = 100000
-
    ! Initialize seed for random number generator
    call init_random_seed()
    ! Load the Granvik et al. 2018 NEO population model
    call gmb_load()
    ! Read the input file gen_distri.nml
-   call read_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
+   call read_data(max_iter, sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
       & mean_rho, std_rho, mean_D, std_D, mean_rhos, std_rhos, mean_gam, std_gam, &
       & mean_P, std_P, mean_dadt, std_dadt, alpha)
    call print_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
@@ -121,7 +121,17 @@ program gen_distrib
       write(unit_gam,  *) gam
       write(unit_P,    *) P
       write(unit_dadt, *) dadt
+      ! If negative, use population model
+      if(alpha.lt.0.d0)then
+         bond_albedo = qq*pv
+         aa          = 1.d0 - bond_albedo
+         write(unit_alpha, *) aa
+      endif
    enddo
+   ! If alpha is positive, use single value
+   if(alpha.gt.0.d0)then
+      write(unit_alpha, *) alpha
+   endif
    ! Close the files
    close(unit_pv)
    close(unit_rho)
@@ -136,11 +146,13 @@ program gen_distrib
    write(output_unit,*) "Done"
 end program gen_distrib
 
-subroutine read_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
+! PURPOSE: 
+subroutine read_data(max_iter, sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
       & mean_rho, std_rho, mean_D, std_D, mean_rhos, std_rhos, mean_gam, std_gam, &
       & mean_P, std_P, mean_dadt, std_dadt, alpha)
    use used_const
    implicit none
+   integer,          intent(out) :: max_iter
    real(kind=dkind), intent(out) :: sma, ecc, inc
    real(kind=dkind), intent(out) :: mean_H,    std_H   
    real(kind=dkind), intent(out) :: mean_pv,   std_pv  
@@ -152,7 +164,7 @@ subroutine read_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, &
    real(kind=dkind), intent(out) :: mean_dadt, std_dadt 
    real(kind=dkind), intent(out) :: alpha  
    ! end interface
-   namelist /param_model/ sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
+   namelist /param_model/ max_iter, sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
       & mean_rho, std_rho, mean_D, std_D, mean_rhos, std_rhos, mean_gam, std_gam, &
       & mean_P, std_P, mean_dadt, std_dadt, alpha
    ! read the input namelist
@@ -186,6 +198,7 @@ subroutine read_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, &
    endif
 end subroutine
 
+! PURPOSE: 
 subroutine print_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, & 
       & mean_rho, std_rho, mean_D, std_D, mean_rhos, std_rhos, mean_gam, std_gam, &
       & mean_P, std_P, mean_dadt, std_dadt, alpha)
@@ -233,6 +246,11 @@ subroutine print_data(sma, ecc, inc, mean_H, std_H, mean_pv, std_pv, &
       write(output_unit, *) " gamma =    POPULATION MODEL     "
    else
       write(output_unit, *) " gamma = ", mean_gam, "±", std_gam
+   endif
+   if(alpha.lt.0.d0)then
+      write(output_unit, *) " alpha =    POPULATION MODEL     "
+   else
+      write(output_unit, *) " alpha = ", alpha 
    endif
    write(output_unit, *) "     P = ", mean_P, "±", std_P
    write(output_unit, *) " da/dt = ", mean_dadt, "±", std_dadt

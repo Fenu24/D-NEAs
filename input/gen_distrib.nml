@@ -1,4 +1,5 @@
 &param_model
+  max_iter = 100000,
       sma  = 2.062846039108595, 
       ecc  = .5204690304323265,
       inc  = 10.72885860239125,
@@ -18,7 +19,7 @@
   std_P    = 0.0028,
  mean_dadt = -0.0583,
   std_dadt = -0.0178,
-   alpha   = 1.0,
+   alpha   = -1.0,
 /
 
 ! NOTE: Negative values means use the population model 
