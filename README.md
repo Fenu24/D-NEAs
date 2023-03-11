@@ -19,16 +19,20 @@
 
 ## Introduction
 
-This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
+This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP Grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
 This package contains a software implementing a method for the thermal inertia estimation of near-Earth asteroids (NEAs), 
 that based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are 
 published in the papers XXX, YYY, ZZZ.
 
-The software is written as a combination of FORTRAN, python, and bash scripting. The main executable for the thermal 
-inertia estimation is called
+The software is written as a combination of FORTRAN and bash scripting. The two programs included in this software are called
+   
+            gen_distrib.x
+
+and
 
             gamma_est_mc.x 
 
+Detailed instructions for the usage of these programs are described below.
 The user can find the mathematical details of the model in the paper WWW.
 
 
@@ -37,9 +41,9 @@ The user can find the mathematical details of the model in the paper WWW.
 The code is structured into the following folders:
 -    **src**: contains the source codes
 -    **bin**: contains the binary files of the executables and scripts
+-    **dat**: contains data files needed to run the program 
 -  **input**: contains the input files of the executables
 - **output**: contains the output files
-- **matlab**: contains scripts and functions to produce input and output
 -   **.mod**: contains the .mod files needed at compilation time
 -   **.obj**: contains the .o files needed at compilation time
 
@@ -85,6 +89,7 @@ The program needs the following files, to be placed in the <tt>input</tt> folder
 - **diam_mc.txt**: contains the distribution of the diameter of the asteroid (in m);
 - **gamma_mc.txt**: contains the distribution of the obliquity of the asteroid (in deg);
 - **period_mc.txt**: contains the distribution of the rotation period of the asteroid (in hours).
+- **alpha_mc.txt**: contains the distribution of the absorption coefficient. 
 
 WRITE HOW TO GENERATE THE DISTRIBUTIONS WHEN THE PYTHON PART IS READY.
 
