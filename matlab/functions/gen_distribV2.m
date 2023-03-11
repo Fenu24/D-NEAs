@@ -1,11 +1,11 @@
-function gen_distribV2(D, D_sigma, H, H_sigma, dadt_mean, dadt_sigma,...
+function [sample_diam, sample_rho] = gen_distribV2(D, D_sigma, H, H_sigma, dadt_mean, dadt_sigma,...
     P, P_sigma, p, folder, n)
    % gen_distrib(D, D_sigma, H, H_sigma, dadt_mean, dadt_sigma, P, P_sigma, p, folder, n)
    
    
    % Optional parameter
     if ~exist('n','var')
-        n = 1.e4;
+        n = 1.e5;
     end
 
    path = strcat('../',folder);
@@ -21,7 +21,7 @@ function gen_distribV2(D, D_sigma, H, H_sigma, dadt_mean, dadt_sigma,...
         % If the diameter is not known, the samples for diameter and density have to be
         % constructed using the same albedo distribution
         H_sigma = 0.3;
-        [sample_rho, sample_diam] = pdf_density_diameter(H, H_sigma, p, 50000);
+        [sample_rho, sample_diam] = pdf_density_diameter(H, H_sigma, p, 100000);
    end
    
    % Distribution gamma

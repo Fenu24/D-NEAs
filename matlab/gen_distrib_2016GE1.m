@@ -20,8 +20,8 @@ a        = 2.062846039108595;
 e        = .5204690304323265;
 inc      = 10.72885860239125;
 % Convert A2 to da/dt
-dadt       = a22my(A2, a, e);
-dadt_sigma = a22my(sigma_A2, a, e);
+dadt       = a22my(A2, a, e)
+dadt_sigma = a22my(sigma_A2, a, e)
 % Absolute magnitude
 H       = 26.7;
 H_sigma = 0.3;

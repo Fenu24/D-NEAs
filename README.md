@@ -173,7 +173,7 @@ histograms of log<sub>10</sub> of these values, the user should obtain something
 
 The D-NEAs software is released under the XXX license, and it is developed and maintained by
 
-- [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<marco_fenucci@matf.bg.ac.rs>) 
+- [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), ESA NEO Coordination Centre (<marco.fenucci@ext.esa.int>) 
 - [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
 - [Dušan Marčeta](http://poincare.matf.bg.ac.rs/~dmarceta/), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<dmarceta@matf.bg.ac.rs>) 
 

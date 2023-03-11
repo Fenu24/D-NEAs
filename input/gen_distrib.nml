@@ -1,0 +1,24 @@
+&param_model
+      sma  = 2.062846039108595, 
+      ecc  = .5204690304323265,
+      inc  = 10.72885860239125,
+  mean_H   = 26.7,
+   std_H   = 0.3, 
+  mean_pv  = -1.0,
+   std_pv  = -1.0,
+  mean_rho = -1.0,
+   std_rho = -1.0,
+  mean_D   = -1.0,
+   std_D   = -1.0,
+ mean_rhos = -1.0, 
+  std_rhos = -1.0,
+ mean_gam  = -1.0, 
+  std_gam  = -1.0,
+ mean_P    = 0.009438,
+  std_P    = 0.0028,
+ mean_dadt = -0.0583,
+  std_dadt = -0.0178,
+   alpha   = 1.0,
+/
+
+! NOTE: Negative values means use the population model 
