@@ -19,7 +19,7 @@
 
 ## Introduction
 
-This software was developed for the D-NEAs project, that was awarded with the [Planetary Society STEP Grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
+This software was developed for the [D-NEAs project](http://asteroids.matf.bg.ac.rs/fam/dneas/website/en/index.html), that was awarded with the [Planetary Society STEP Grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
 This package contains a software implementing a method for the thermal inertia estimation of near-Earth asteroids (NEAs), 
 that based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are 
 published in the papers XXX, YYY, ZZZ.
@@ -181,7 +181,8 @@ The D-NEAs software is released under the XXX license, and it is developed and m
 - [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), ESA NEO Coordination Centre (<marco.fenucci@ext.esa.int>) 
 - [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
 - [Dušan Marčeta](http://poincare.matf.bg.ac.rs/~dmarceta/), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<dmarceta@matf.bg.ac.rs>) 
+- [Debora Pavela], Department of Astronomy, Faculty of Mathematics, University of Belgrade 
 
 ## References
 
-- M. Fenucci and B. Novaković: 2022. [*Low thermal conductivity of the super-fast rotator (499998) 2011 PT*](https://ui.adsabs.harvard.edu/link_gateway/2021A&A...647A..61F/doi:10.1051/0004-6361/202039628), Astronomy and Astrophysics 647, A61
+- M. Fenucci, B. Novaković, D. Vokrouhlický, and R. J. Weryk: 2021. [*Low thermal conductivity of the super-fast rotator (499998) 2011 PT*](https://ui.adsabs.harvard.edu/link_gateway/2021A&A...647A..61F/doi:10.1051/0004-6361/202039628), Astronomy and Astrophysics 647, A61
