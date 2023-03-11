@@ -77,7 +77,7 @@ The program <tt>gamma_est_mc.x</tt> for the thermal inertia estimation has two k
 
 In the next sections we explain how to produce the input files, how to run the code, and what are the output files of the code.
 
-### Distributions of physical parameters 
+### Distributions of physical parameters: <tt>gen_distrib.x</tt>
 
 Some parameters of the Yarkovsky model can be assumed to have a certain distribution. In our model, we assume that the measured Yarkovsky effect, 
 the bulk and the surface density, the diameter, the obliquity, and the rotation period may all be represented by a distribution.
@@ -93,7 +93,7 @@ The program needs the following files, to be placed in the <tt>input</tt> folder
 
 WRITE HOW TO GENERATE THE DISTRIBUTIONS WHEN THE PYTHON PART IS READY.
 
-### Configuration file for the main program
+### Thermal inertia estimation: <tt>gamma_est_mc.x</tt>
 
 The program <tt>gamma_est_mc.x</tt> also needs a configuration file called <tt>gamma_est_mc.nml</tt>, to be placed in the folder <tt>input</tt>. 
 In this file the user must provide:
