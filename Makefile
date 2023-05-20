@@ -29,7 +29,7 @@ BIN=bin
 ################################################################
 # creation of executable programs
 
-all: $(BIN)/$(EXE0) $(BIN)/$(EXE1) $(BIN)/$(EXE2) links_ex
+all: $(BIN)/$(EXE0) $(BIN)/$(EXE1) $(BIN)/$(EXE2) links_ex gen_model
 
 $(BIN)/$(EXE0): $(OBJ0)
 	$(FC) $(FFLAGS) $^ -o $@ $(LINK)
@@ -46,6 +46,9 @@ links_ex:
 	ln -s bin/$(EXE1)
 	ln -s bin/$(EXE2)
 	ln -s bin/gamma_est_mc_batches.sh
+
+gen_model:
+	cd dat && chmod +x gmb_model_construct.sh && ./gmb_model_construct.sh
 
 test:
 	cp input/2011PT_test/* input/
