@@ -234,7 +234,7 @@ module population_model
    ! 
    ! OUTPUT:
    !   gam : obliquity [deg]
-   ! TODO: I have to fix this
+   !
    ! The cdf for cos gamma is
    !
    ! f = a y^3/3 + b y^2/2 + cy +a/3 - b/2 +c
@@ -263,8 +263,6 @@ module population_model
       enddo
       gam = acos(cosgp)*rad2deg
    end subroutine
-
-   !TODO: gen_alpha
 
    ! PURPOSE: Converts (pv, H) in diameter. Diameter in output in meters
    !

@@ -1,4 +1,4 @@
-# Manual for the D-NEAs software
+# Manual for the Asteroid Thermal Inertia Analyzer (ASTERIA) software
 
 <p align="center">
 <img src=".img/logo.png" width="60%" height="60%">
@@ -19,12 +19,12 @@
 
 ## Introduction
 
-This software was developed for the [D-NEAs project](http://asteroids.matf.bg.ac.rs/fam/dneas/website/en/index.html), that was awarded with the [Planetary Society STEP Grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
+The Asteroid Thermal Inertia Analyzer (ASTERIA) software has been developed under the [D-NEAs project](http://asteroids.matf.bg.ac.rs/fam/dneas/website/en/index.html), that was awarded with the [Planetary Society STEP Grant 2021](https://www.planetary.org/articles/step-grant-winners-2022). 
 This package contains a software implementing a method for the thermal inertia estimation of near-Earth asteroids (NEAs), 
-that based on the measurements of the Yarkovsky effect by astrometry. Original results based on this code are 
-published in the papers XXX, YYY, ZZZ.
+that is based on the measurements of the Yarkovsky effect obtained by orbit determination. Original results based on this code are 
+published in the papers Fenucci et al. 2021, Fenucci et al. 2023.
 
-The software is written as a combination of FORTRAN and bash scripting. The two programs included in this software are called
+The software is written in FORTRAN, and the two programs included in this distribution are called
    
             gen_distrib.x
 
@@ -33,8 +33,9 @@ and
             gamma_est_mc.x 
 
 Detailed instructions for the usage of these programs are described below.
-The user can find the mathematical details of the model in the paper WWW.
+The user can find the mathematical details of the model in the paper 
 
+M. Fenucci, B. Novaković, D. Marčeta, and D. Pavela: 2023. *ASTERIA - Asteroid Thermal Inertia Analyzer*
 
 ## Compilation
 
@@ -48,9 +49,9 @@ The code is structured into the following folders:
 -   **.obj**: contains the .o files needed at compilation time
 
 Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution
-comes with a configuration script and a Makefile that automatically do the job. To compile the source code, 
-please follow these steps
-1. Choose the compiler and the compilation options by running the <tt>config.sh</tt> script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: GNU gfortran, and Intel ifort. An additional option defines the compilation flags, and the final user can select the optimization flags "-O". For instance, if you want to use the GNU gfortran compiler, you can run the script as
+comes with a configuration script and a Makefile that automatically perform the job. To compile the source code, 
+please follow these steps:
+1. Choose the compiler and the compilation options by running the <tt>config.sh</tt> script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: [GNU gfortran](https://gcc.gnu.org/fortran/), and [Intel ifort](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html). For the software to be compiler correctly, one of these two compilers need to be installed in your system. An additional option defines the compilation flags, and the final user can select the optimization flags "-O". For instance, if you want to use the GNU gfortran compiler, you can run the script as
            
            ./config.sh -O gfortran
             
@@ -61,7 +62,7 @@ please follow these steps
    and the executable binary files will be placed in the <tt>bin</tt> directory. Symbolic links will be created in the main directory.
 
 
-**NOTE 1.** The code has been tested with the <tt>Intel ifort compiler v. 2021.3.0</tt>, and with the <tt>GNU gfortran compiler v. 9.4.0</tt>. Note that the <tt>-qopenmp</tt> flag is not available in the Intel ifort versions previous to the 2018.0.0, and therefore the compilation may not work. 
+**NOTE 1.** The code has been tested with the <tt>Intel ifort compiler v. 2021.3.0</tt>, and with the <tt>GNU gfortran compiler v. 9.4.0</tt>, installed on Ubuntu 20.04 LTS. Note that the <tt>-qopenmp</tt> flag is not available in the Intel ifort versions previous to the 2018.0.0, and therefore the compilation may not work. 
 
 **NOTE 2.** In our runs, we found that the code is significantly faster when compiled with the [Intel ifort compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html#gs.9x3c16) rather than with the GNU gfortran compiler. We suggest the user to compile the code whit the Intel ifort compiler in order to obtain the best performances.
 
@@ -72,8 +73,8 @@ please follow these steps
 
 The program <tt>gamma_est_mc.x</tt> for the thermal inertia estimation has two kinds of input:
 
-1. files containing the distributions of physical parameters
-2. a configuration file containing the fixed physical parameters and the settings for the run
+1. files containing the distributions of physical parameters;
+2. a configuration file containing the fixed physical parameters and the settings for the run.
 
 In the next sections we explain how to produce the input files, how to run the code, and what are the output files of the code.
 
@@ -91,7 +92,33 @@ The program needs the following files, to be placed in the <tt>input</tt> folder
 - **period_mc.txt**: contains the distribution of the rotation period of the asteroid (in hours).
 - **alpha_mc.txt**: contains the distribution of the absorption coefficient. 
 
-WRITE HOW TO GENERATE THE DISTRIBUTIONS WHEN THE PYTHON PART IS READY.
+These files can be either manually created by the user, or generated by using the program <tt>gen_distrib.x</tt>. This driver permits to create the distribution files in two different ways: 1) using a Gaussian distribution with user-defined mean and standard deviation; 2) using the population model described in Fenucci et al. 2023b. The first option is suitable when an estimated value for the corresponding parameter is available. The second option can be used when no information about a certain parameter are available, and the best that can be done is an estimation based on the properties of the whole NEO population.
+
+The <tt>gen_distrib.x</tt> program needs an input file called <tt>gen_distrib.nml</tt> containing the following parameters:
+
+- **max_iter**: dimension of the distribution sample;
+- **sma**: semi-major axis of the asteroid orbit (in au);
+- **ecc**: eccentricity of the asteroid orbit;
+- **inc**: inclination of the asteroid orbit;
+- **mean_H**: absolute magnitude of the asteroid;
+- **std_H**: error on the absolute magnitude;
+- **mean_pv**: albedo - use population model if negative;
+- **std_pv**: error on the albedo;
+- **mean_rho**: density (in kg/m^3) - use population model if negative;
+- **std_rho**: error on the density (in kg/m^3);
+- **mean_D**: diameter (in m) - use population model if negative;
+- **std_D**: error on the diameter (in m);
+- **mean_rhos**: density of the surface material (in kg/m^3);
+- **std_rhos**: error in the density of the surface material (in km/m^3);
+- **mean_gam**: obliquity (in deg) - use population model if negative;
+- **std_gam**: error in obliquity (in deg);
+- **mean_P**: rotation period (in h);
+- **std_P**: error on the rotation period;
+- **mean_dadt**: semi-major axis drift due to the Yarkovsky effect (in au/My);
+- **std_dadt**: error in the semi-major axis drift (in au/My);
+- **alpha**: absorption coefficient - use population model if negative.
+
+
 
 ### Thermal inertia estimation: <tt>gamma_est_mc.x</tt>
 
@@ -181,8 +208,10 @@ The D-NEAs software is released under the XXX license, and it is developed and m
 - [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), ESA NEO Coordination Centre (<marco.fenucci@ext.esa.int>) 
 - [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
 - [Dušan Marčeta](http://poincare.matf.bg.ac.rs/~dmarceta/), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<dmarceta@matf.bg.ac.rs>) 
-- [Debora Pavela], Department of Astronomy, Faculty of Mathematics, University of Belgrade 
+- Debora Pavela, Department of Astronomy, Faculty of Mathematics, University of Belgrade 
 
 ## References
 
 - M. Fenucci, B. Novaković, D. Vokrouhlický, and R. J. Weryk: 2021. [*Low thermal conductivity of the super-fast rotator (499998) 2011 PT*](https://ui.adsabs.harvard.edu/link_gateway/2021A&A...647A..61F/doi:10.1051/0004-6361/202039628), Astronomy and Astrophysics 647, A61
+- M. Fenucci, B. Novaković, and D. Marčeta: 2023. *The low surface thermal inertia of the rapidly rotating near-Earth asteroid 2016 GE1*
+- M. Fenucci, B. Novaković, D. Marčeta, and D. Pavela: 2023. *ASTERIA - Asteroid Thermal Inertia Analyzer*
