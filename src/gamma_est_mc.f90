@@ -13,29 +13,30 @@ program gamma_est_mc
    implicit none
    ! Interfaces for the subroutines with optional arguments
    interface
-      subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
+      subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, n_rho_surf)
          implicit none
-         integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P
+         integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha
          integer, optional, intent(out) :: n_rho_surf
       end subroutine
 
-      subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
+      subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, alpha_mc, rho_surf_mc)
          use used_const
          real(kind=dkind),           intent(out) :: diam_mc(:)
          real(kind=dkind),           intent(out) :: rho_mc(:)
          real(kind=dkind),           intent(out) :: gamma_mc(:)
          real(kind=dkind),           intent(out) :: dadt_mc(:)
          real(kind=dkind),           intent(out) :: period_mc(:)
+         real(kind=dkind),           intent(out) :: alpha_mc(:)
          real(kind=dkind), optional, intent(out) :: rho_surf_mc(:)
       end subroutine
 
-      subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, &
-            & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, &
+      subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, &
+            & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, rand_alpha, &
             & n_rho_surf, rand_rho_surf)
          use used_const
          implicit none
-         integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P
-         integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P
+         integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha
+         integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, rand_alpha
          integer, optional, intent(in)  :: n_rho_surf
          integer, optional, intent(out) :: rand_rho_surf
       end subroutine
@@ -56,9 +57,9 @@ program gamma_est_mc
    ! 3 = 2-layers semi-analytical eccentric model
    integer          :: method 
    ! Length of the input distribution files
-   integer          :: n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf
+   integer          :: n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf, n_alpha
    ! Variables for the input distribution files
-   real(kind=dkind), allocatable,  dimension(:) :: diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc
+   real(kind=dkind), allocatable,  dimension(:) :: diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc, alpha_mc
    ! Vector containing the solutions of the modeled vs. measured Yarkovsky drift
    real(kind=dkind) :: Kcross(6)
    integer          :: nCross
@@ -68,7 +69,7 @@ program gamma_est_mc
    ! Output filename
    character(80)    :: filename
    ! Variables for the main do loop
-   integer          :: hh, kk, jj, ii, ll, zz, mm
+   integer          :: hh, kk, jj, ii, ll, zz, mm, aa
    integer, allocatable, dimension(:,:) :: rnd_comb
    integer          :: iter
    integer          :: max_iter 
@@ -84,21 +85,21 @@ program gamma_est_mc
    integer                     :: ierr
    logical                     :: is_present, skip_iter
    ! Read input data
-   call readData(C, Kmin, Kmax, semiaxm, ecc,  alpha, epsi, method, filename, max_iter, expo, n_proc)
+   call readData(C, Kmin, Kmax, semiaxm, ecc,  epsi, method, filename, max_iter, expo, n_proc)
    ! Read the distributions of diameter, density and obliquity, depending on the method used
    if(method.eq.3)then
       ! Call readLengths asking also for n_rho_surf
-      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
-      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
+      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, n_rho_surf)
+      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P), alpha_mc(1:n_alpha))
       allocate(rho_surf_mc(1:n_rho_surf))
-      allocate(rnd_comb(6, max_iter))
-      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
+      allocate(rnd_comb(7, max_iter))
+      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, alpha_mc, rho_surf_mc)
    elseif(method.eq.1 .or. method.eq.2)then
       ! Call readLengths without asking for rho_surf
-      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P)
-      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P))
-      allocate(rnd_comb(5, max_iter))
-      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc)
+      call readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha)
+      allocate(diam_mc(1:n_D), rho_mc(1:n_rho), gamma_mc(1:n_gamma), dadt_mc(1:n_dadt), period_mc(1:n_P), alpha_mc(1:n_alpha))
+      allocate(rnd_comb(6, max_iter))
+      call readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, alpha_mc)
    endif
    ! Write the input parameters on screen
    write(output_unit,screen_fmt_s) "====== INPUT PARAMETERS ======="
@@ -110,7 +111,6 @@ program gamma_est_mc
    write(output_unit,screen_fmt_s) "PHYSICAL PARAMETERS:           "
    write(output_unit,screen_fmt_d) "      Heat capacity (J/kg/K) = ", C
    write(output_unit,screen_fmt_d) "         Emissivity          = ", epsi
-   write(output_unit,screen_fmt_d) "   Absorption coeff.         = ", alpha
    write(output_unit,screen_fmt_s) "                               "
    write(output_unit,screen_fmt_s) "SIMULATION PARAMETERS:         "
    write(output_unit,screen_fmt_i) "             Yarkovsky model = ", method 
@@ -141,29 +141,31 @@ program gamma_est_mc
    ! OpenMP multiple threads 
    do iter=1, max_iter
       if(method.eq.1.or. method.eq.2)then
-         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll)
+         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, hh, kk, jj, ii, ll, aa)
          rnd_comb(1, iter) = hh
          rnd_comb(2, iter) = kk
          rnd_comb(3, iter) = jj
          rnd_comb(4, iter) = ii
          rnd_comb(5, iter) = ll
+         rnd_comb(6, iter) = aa
       else
          ! If model = 3, ask also for the combination for the surface density
-         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, hh, kk, jj, ii, ll, n_rho_surf, mm)
+         call random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, hh, kk, jj, ii, ll, aa, n_rho_surf, mm)
          rnd_comb(1, iter) = hh
          rnd_comb(2, iter) = kk
          rnd_comb(3, iter) = jj
          rnd_comb(4, iter) = ii
          rnd_comb(5, iter) = ll
-         rnd_comb(6, iter) = mm
+         rnd_comb(6, iter) = aa
+         rnd_comb(7, iter) = mm
       endif
    enddo
    ! Set the number of processors to use for the main do loop
    call omp_set_num_threads(n_proc)
    ! Loop on the distributions of dadt, diameter, density and obliquity
-   !$OMP PARALLEL DEFAULT(private) SHARED(max_iter, alpha, epsi, kMin, kMax, method, expo, &
+   !$OMP PARALLEL DEFAULT(private) SHARED(max_iter, epsi, kMin, kMax, method, expo, &
    !$OMP& n_D, n_rho, n_gamma, n_dadt, n_P, rho_mc, gamma_mc, period_mc, dadt_mc, diam_mc, &
-   !$OMP& C, semiaxm, ecc, rnd_comb, n_proc, rho_surf_mc, n_rho_surf)
+   !$OMP& C, semiaxm, ecc, rnd_comb, n_proc, rho_surf_mc, n_rho_surf, alpha_mc, n_alpha)
    !!$OMP PARALLEL DEFAULT(shared) PRIVATE(hh, kk, jj, ii, ll, zz, radius, rho, gam, levelCurve, kCross, nCross, thermalInertia)
    !$OMP DO
    do iter=1, max_iter
@@ -177,6 +179,7 @@ program gamma_est_mc
       jj = rnd_comb(3, iter)
       ii = rnd_comb(4, iter)
       ll = rnd_comb(5, iter)
+      aa = rnd_comb(6, iter)
       ! Take the values of the parameters. Note that diameter and density comes in couples,
       ! since they are correlated by the albedo 
       radius     = diam_mc(hh)/2.d0 
@@ -188,6 +191,7 @@ program gamma_est_mc
       gam        = gamma_mc(jj) 
       rotPer     = period_mc(ll)
       levelCurve = dadt_mc(ii)
+      alpha      = alpha_mc(aa)
       ! Check if for some reason there are errors in the input
       ! parameters
       call check_params(radius, rho, gam, rotPer, 100, skip_iter)
@@ -200,7 +204,7 @@ program gamma_est_mc
             & gam, rotPer, alpha, epsi, levelCurve, kMin, kMax, kCross, nCross, method, expo)
       else
          ! Take the integer for the surface density
-         mm = rnd_comb(6, iter)
+         mm = rnd_comb(7, iter)
          ! Take the value of the surface density
          rho_surf = rho_surf_mc(mm)
          ! Call yarkoInvert with the surface density as additional parameter
@@ -268,13 +272,12 @@ end program gamma_est_mc
 !           expo : exponent of the variation of K along a non-circular trajectory
 !         n_proc : number of processors to use for the parallel runs
 subroutine readData(C, thermalCondMin, thermalCondMax, &
-      &  semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo, n_proc)
+      &  semiaxm, ecc, emissiv, method, filename, max_iter, expo, n_proc)
    use used_const
    implicit none
    real(kind=dkind), intent(out) :: C
    real(kind=dkind), intent(out) :: semiaxm, ecc
    real(kind=dkind), intent(out) :: thermalCondMin, thermalCondMax
-   real(kind=dkind), intent(out) :: absCoeff
    real(kind=dkind), intent(out) :: emissiv
    real(kind=dkind), intent(out) :: expo
    integer,          intent(out) :: method 
@@ -283,7 +286,7 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    integer,          intent(out) :: n_proc
    ! end interface
    namelist /asteroid/ C, thermalCondMin, thermalCondMax, &
-      & semiaxm, ecc, absCoeff, emissiv, method, filename, max_iter, expo, n_proc
+      & semiaxm, ecc, emissiv, method, filename, max_iter, expo, n_proc
    ! read the input namelist
    open(unit=1,file="input/gamma_est_mc.nml",status="old",action="read")
    read(1,asteroid)
@@ -319,11 +322,6 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
       write(*,*) " Selected method: ", method
       write(*,*) " STOPPING PROGRAM"
       stop
-   elseif(absCoeff.le.0.d0)then
-      write(*,*) "ERROR: Absorption coefficient must be positive. "
-      write(*,*) " Selected: ", absCoeff 
-      write(*,*) " STOPPING PROGRAM"
-      stop
    elseif(emissiv.lt.0.d0 .or. emissiv.gt.1.d0)then
       write(*,*) "ERROR: Emissivity must be between 0 and 1."
       write(*,*) " Selected: ", emissiv 
@@ -353,10 +351,10 @@ end subroutine readData
 !   n_gamma : length of the obliquity distribution
 !    n_dadt : length of the measured Yarkovsky drift distribution
 !       n_P : length of the rotation period distribution
-subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
+subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P,  n_alpha, n_rho_surf)
    use used_const
    implicit none
-   integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P
+   integer,           intent(out) :: n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha
    integer, optional, intent(out) :: n_rho_surf
    ! end interface
    real(kind=dkind) :: x
@@ -416,6 +414,17 @@ subroutine readLengths(n_D, n_rho, n_gamma, n_dadt, n_P, n_rho_surf)
    enddo
    close(5)
 
+   open(unit=7, file='input/alpha_mc.txt', status='old')
+   n_alpha = 0
+   do 
+      read(7,*,iostat=flag) x 
+      if(flag.lt.0)then
+         exit
+      endif
+      n_alpha = n_alpha+1
+   enddo
+   close(7)
+
    if(present(n_rho_surf))then
       open(unit=6, file='input/rho_surf_mc.txt', status='old')
       n_rho_surf = 0
@@ -437,7 +446,7 @@ end subroutine readLengths
 !
 ! OUTPUT:
 ! diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc : vector containing the distributions
-subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc)
+subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, alpha_mc, rho_surf_mc)
    use used_const
    implicit none
    real(kind=dkind),           intent(out) :: diam_mc(:)
@@ -445,15 +454,17 @@ subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc
    real(kind=dkind),           intent(out) :: gamma_mc(:)
    real(kind=dkind),           intent(out) :: dadt_mc(:)
    real(kind=dkind),           intent(out) :: period_mc(:)
+   real(kind=dkind),           intent(out) :: alpha_mc(:)
    real(kind=dkind), optional, intent(out) :: rho_surf_mc(:)
    ! end interface
-   integer :: n_D, n_rho, n_gamma, n_dadt, n_P,  n_rho_surf
+   integer :: n_D, n_rho, n_gamma, n_dadt, n_P,  n_rho_surf, n_alpha
    integer :: i
    n_D     = size(diam_mc,1)
    n_rho   = size(rho_mc,1)
    n_gamma = size(gamma_mc,1)
    n_dadt  = size(dadt_mc,1)
    n_P     = size(period_mc,1)
+   n_alpha = size(alpha_mc,1)
 
    open(unit=1, file='input/diam_mc.txt', status='old')
    do i=1,n_D
@@ -484,6 +495,12 @@ subroutine readMCdata(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc, rho_surf_mc
       read(5,*) period_mc(i)
    enddo
    close(5)
+
+   open(unit=7, file='input/alpha_mc.txt', status='old')
+   do i=1,n_alpha
+      read(7,*) alpha_mc(i)
+   enddo
+   close(7)
 
    if(present(rho_surf_mc))then
       n_rho_surf = size(rho_surf_mc,1)
@@ -770,13 +787,13 @@ end subroutine bisectionMethod
 !
 ! OUTPUT:
 ! rand_D, rand_rho, rand_gamma, rand_dadt, rand_P : random number generated between 0 and length
-subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, &
-      & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, &
+subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha, &
+      & rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, rand_alpha, &
       & n_rho_surf, rand_rho_surf)
    use used_const
    implicit none
-   integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P
-   integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P
+   integer,           intent(in)  :: n_D, n_rho, n_gamma, n_dadt, n_P, n_alpha
+   integer,           intent(out) :: rand_D, rand_rho, rand_gamma, rand_dadt, rand_P, rand_alpha
    integer, optional, intent(in)  :: n_rho_surf
    integer, optional, intent(out) :: rand_rho_surf
    ! end interface
@@ -791,6 +808,8 @@ subroutine random_combination(n_D, n_rho, n_gamma, n_dadt, n_P, &
    rand_dadt  = 1 + floor((n_dadt)*u)
    call random_number(u)
    rand_P     = 1 + floor((n_P)*u)
+   call random_number(u)
+   rand_alpha = 1 + floor((n_alpha)*u)
    if(present(n_rho_surf) .and. present(rand_rho_surf))then
       call random_number(u)
       rand_rho_surf = 1 + floor((n_rho_surf)*u)

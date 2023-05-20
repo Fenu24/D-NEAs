@@ -122,7 +122,7 @@ The <tt>gen_distrib.x</tt> program needs an input file called <tt>gen_distrib.nm
 
 ### Thermal inertia estimation: <tt>gamma_est_mc.x</tt>
 
-The program <tt>gamma_est_mc.x</tt> also needs a configuration file called <tt>gamma_est_mc.nml</tt>, to be placed in the folder <tt>input</tt>. 
+Once all the distribution files are created, the program <tt>gamma_est_mc.x</tt> also needs a configuration file called <tt>gamma_est_mc.nml</tt>, to be placed in the folder <tt>input</tt>. 
 In this file the user must provide:
 
 - **C**: the value of the heat capacity C (in J/kg/K).
