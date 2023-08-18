@@ -193,7 +193,7 @@ module population_model
       p_albedo(3, 3) = 0.149d0
       p_albedo(3, 4) = 0.866d0
       p_albedo(3, 5) = 0.047d0
-      p_albedo(3, 6) = 0.461d0
+      p_albedo(3, 6) = 0.401d0
       p_albedo(3, 7) = 0.0d0
       ! Compute the probabilities of
       ! pv < 0.1, 0.1 < pv < 0.3

@@ -80,10 +80,10 @@ program gamma_est_mc
    character(len=*), parameter :: screen_fmt_i = '(a32, i9)'
    character(len=*), parameter :: screen_fmt_s = '(a32)'
    character(len=*), parameter :: screen_fmt_f = '(a32, a50)'
-   character(len=*), parameter ::    out_fmt1  = '(7(e20.14, 2x))'
-   character(len=*), parameter ::    out_fmt2  = '(8(e20.14, 2x))'
+   character(len=*), parameter ::    out_fmt1  = '(7(e10.4, 2x))'
+   character(len=*), parameter ::    out_fmt2  = '(8(e10.4, 2x))'
    integer                     :: ierr
-   logical                     :: is_present, skip_iter
+   logical                     :: is_present, skip_iter, has_warnings
    ! Read input data
    call readData(C, Kmin, Kmax, semiaxm, ecc,  epsi, method, filename, max_iter, expo, n_proc)
    ! Read the distributions of diameter, density and obliquity, depending on the method used
@@ -128,6 +128,7 @@ program gamma_est_mc
    ! Open the output file
    open(unit=10,  file='output/'//filename(1:len_trim(filename))//'.txt', action='write')    
    open(unit=100, file='output/'//filename(1:len_trim(filename))//'.warn',action='write')    
+   has_warnings = .false.
    ! Check if the done file is present. If it is, delete it
    inquire(file='output/'//filename(1:len_trim(filename))//'.done', exist=is_present)
    if(is_present)then
@@ -196,6 +197,7 @@ program gamma_est_mc
       ! parameters
       call check_params(radius, rho, gam, rotPer, 100, skip_iter)
       if(skip_iter)then
+         has_warnings = .true.
          cycle
       endif
       ! Invert the modeled vs. observed Yarkovsky drift equation
@@ -244,7 +246,13 @@ program gamma_est_mc
    deallocate(diam_mc, rho_mc, gamma_mc, dadt_mc, period_mc)
    ! Create the .done file
    open(unit=11, file='output/'//filename(1:len_trim(filename))//'.done', action='write')
+   write(11, *) "Computation finished correctly."
    close(11)
+   ! If it does not have warnings, remov .warn file
+   if(.not.has_warnings)then
+      open(unit=100, file='output/'//filename(1:len_trim(filename))//'.warn',status='old')    
+      close(100,status="delete")
+   endif
 end program gamma_est_mc 
 
 !========================================================
