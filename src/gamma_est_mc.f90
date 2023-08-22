@@ -114,7 +114,7 @@ program gamma_est_mc
    write(output_unit,screen_fmt_s) "                               "
    write(output_unit,screen_fmt_s) "SIMULATION PARAMETERS:         "
    write(output_unit,screen_fmt_i) "             Yarkovsky model = ", method 
-   write(output_unit,screen_fmt_d) "          K scaling exponent = ", expo
+   write(output_unit,screen_fmt_d) "      Gamma scaling exponent = ", expo/2.d0
    write(output_unit,screen_fmt_i) "                  Max. iter. = ", max_iter
    write(output_unit,screen_fmt_i) "              Number of CPUs = ", n_proc
    write(output_unit,screen_fmt_s) "                               " 
@@ -299,6 +299,8 @@ subroutine readData(C, thermalCondMin, thermalCondMax, &
    open(unit=1,file="input/gamma_est_mc.nml",status="old",action="read")
    read(1,asteroid)
    close(1)
+   ! Multiply beta by 2 because K must change in the code
+   expo = 2.d0*expo
    ! Check for errors in the input file
    if(C.lt.0.d0)then
       write(*,*) "ERROR. Heat capacity must be positive." 
