@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/478157794.svg)](https://zenodo.org/badge/latestdoi/478157794)
+
 # Manual for the Asteroid Thermal Inertia Analyzer (ASTERIA) software
 
 <p align="center">
