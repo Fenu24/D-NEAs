@@ -220,4 +220,4 @@ The D-NEAs is an open-source software released under the Attribution-NonCommerci
 
 - M. Fenucci, B. Novaković, D. Vokrouhlický, and R. J. Weryk: 2021. [*Low thermal conductivity of the super-fast rotator (499998) 2011 PT*](https://ui.adsabs.harvard.edu/link_gateway/2021A&A...647A..61F/doi:10.1051/0004-6361/202039628), Astronomy and Astrophysics 647, A61
 - M. Fenucci, B. Novaković, and D. Marčeta: 2023. [*The low surface thermal inertia of the rapidly rotating near-Earth asteroid 2016 GE1*](https://ui.adsabs.harvard.edu/abs/2023A%26A...675A.134F/abstract), Astronomy and Astrophysics 657, A134
-- B. Novaković, M. Fenucci,  D. Marčeta, and D. Pavela: 2023. *ASTERIA - Asteroid Thermal Inertia Analyzer*
+- B. Novaković, M. Fenucci,  D. Marčeta, and D. Pavela: 2023. [*ASTERIA - Asteroid Thermal Inertia Analyzer*](https://iopscience.iop.org/article/10.3847/PSJ/ad08c0), Planetary Science Journal, Vol. 5, Num. 11. 

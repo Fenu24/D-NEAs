@@ -99,6 +99,7 @@ program gen_distrib
          ! This case should never occur
          write(output_unit, *) "ERROR. Wrong selection of parameters combination."
          write(output_unit, *) " STOPPING PROGRAM"
+         stop
       endif
       ! rho_surface is always Gaussian
       rhos = gen_normal(mean_rhos, std_rhos)
